@@ -2,9 +2,9 @@
 
 [简体中文](README.md)
 
-LinkShelf is a portable dark-themed folder-link manager for Windows. It uses the index of an **already running Everything instance** over IPC—no full-disk rescan or separate index.
+LinkShelf is a portable, dark-themed Windows folder-link toolkit with two executables: **LinkShelf.exe** manages existing links using an **already running Everything instance** over IPC (no full-disk rescan), while **LinkShelfMover.exe** migrates ordinary folders and creates links at their original locations without requiring Everything.
 
-**Current stable release: v0.1.6**. Folder sizes persist across launches, and links discovered since the previous run are highlighted and pinned above existing links, separated by a slim unlabeled bar.
+**Current stable release: v1.0.0**. Both the manager and the new folder mover ship together. Folder-size caches persist across launches; newly discovered links are highlighted and pinned ahead of existing links.
 
 ### Highlights
 
@@ -15,18 +15,21 @@ LinkShelf is a portable dark-themed folder-link manager for Windows. It uses the
 - Estimate logical data offloaded from `C:` to other local drives while deduplicating identical, nested, and resolved alias targets.
 - Dark UI, remembered layout, adaptive columns, and reduced repainting.
 - Responsive single-row toolbar, dark custom tooltips, per-Everything-instance link snapshots, and a text link for refreshing cached sizes.
+- **Mover:** From Explorer, right-click a single folder and choose **Send to → LinkShelf - 移动并建立目录连接点**; select the destination parent directory, then edit the generated full path if desired. Choose a junction (`/J`, default) or directory symlink (`/D`).
+- **Mover safety:** Validates source, permissions, free space, and destination; copies and hashes data before replacing the original path with a verified link. Requests UAC elevation on access-denied errors, preserving the requested paths and type for explicit reconfirmation. No registry changes or shell extensions: the context action is a per-user SendTo shortcut.
 
 ### Requirements
 
-Windows 10/11 x64, [.NET 8 Desktop Runtime x64](https://dotnet.microsoft.com/download/dotnet/8.0), and a running [Everything](https://www.voidtools.com/) client with an existing index.
+Windows 10/11 x64 and [.NET 8 Desktop Runtime x64](https://dotnet.microsoft.com/download/dotnet/8.0). The manager additionally requires a running [Everything](https://www.voidtools.com/) client with an existing index; Mover does not.
 
-Download `LinkShelf_v0.1.6_Windows_x64.zip` from the [v0.1.6 Release](https://github.com/rampageX/LinkShelf/releases/tag/v0.1.6), extract it, and run `LinkShelf.exe`.
+Download `LinkShelf_v1.0.0_Windows_x64.zip` from the [v1.0.0 Release](https://github.com/rampageX/LinkShelf/releases/tag/v1.0.0), extract the entire ZIP, and run either `LinkShelf.exe` or `LinkShelfMover.exe`.
 
 Portable state stays beside the executable: `LinkShelf.sizes.json` holds cached logical sizes and timestamps; `LinkShelf.links.json` holds link snapshots per Everything instance. No existing links are marked as new during first-run baseline creation. **连接 / 刷新** (Connect / Refresh) only refreshes the indexed link list; the **更新** (Update) text link on the second statistics line recalculates folder sizes. Cached sizes are not live measurements.
 
 ### Important limitations
 
-- The first stable release **does not migrate ordinary folders**.
+- Folder migration is supported **only through LinkShelfMover.exe**, not through the manager's retarget command. Mover operates only on local NTFS directories and deliberately rejects potentially unsafe file types or directory structures.
+- Cross-volume migration is **not atomic**. Even with prechecks and rollback, unexpected process activity, file locks, or power failures can interrupt the operation. Close relevant apps and back up important folders first.
 - System-attribute links and volume mount points are read-only.
 - Network targets are not included in size scans or offload totals.
 - Size totals are estimates of current *logical* data, not historical freed space or physical disk usage.
@@ -36,7 +39,10 @@ Portable state stays beside the executable: `LinkShelf.sizes.json` holds cached 
 
 ```powershell
 dotnet publish Source/LinkShelf.csproj -c Release -r win-x64 --self-contained false -o Build
+dotnet publish Tools/LinkShelfMover/LinkShelfMover.csproj -c Release -r win-x64 --self-contained false -o Build/Mover
 ```
+
+The release ZIP includes source for both tools and native Windows regression tests. For the detailed Mover workflow and limitations, see [Mover documentation](Tools/LinkShelfMover/README.md).
 
 ### License
 

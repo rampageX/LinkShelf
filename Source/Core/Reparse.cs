@@ -6,6 +6,9 @@ namespace LinkShelf.Core;
 public static class Reparse
 {
     public const uint Mount = 0xA0000003, Symlink = 0xA000000C;
+    // Optional log location for the separate migration helper. Main LinkShelf
+    // keeps its existing portable log next to the executable.
+    public static string? JournalPathOverride { get; set; }
     const uint OpenFlags = 0x02200000; // BACKUP_SEMANTICS | OPEN_REPARSE_POINT
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     static extern SafeFileHandle CreateFileW(string path, uint access, uint share, IntPtr security, uint creation, uint flags, IntPtr template);
@@ -89,7 +92,7 @@ public static class Reparse
     }
     static void Journal(string action, object item)
     {
-        string path = System.IO.Path.Combine(AppContext.BaseDirectory, "LinkShelf.operations.jsonl");
+        string path = JournalPathOverride ?? System.IO.Path.Combine(AppContext.BaseDirectory, "LinkShelf.operations.jsonl");
         File.AppendAllText(path, System.Text.Json.JsonSerializer.Serialize(new { time = DateTimeOffset.Now, action, item }) + Environment.NewLine, Encoding.UTF8);
     }
     public static void Delete(LinkRow row)

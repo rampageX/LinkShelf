@@ -25,11 +25,21 @@ jobs:
         shell: pwsh
         run: dotnet publish Source/LinkShelf.csproj -c Release -r win-x64 --self-contained false -o dist
 
-      - name: Publish and run tests
+      - name: Publish LinkShelf Mover
+        shell: pwsh
+        run: dotnet publish Tools/LinkShelfMover/LinkShelfMover.csproj -c Release -r win-x64 --self-contained false -o dist-mover
+
+      - name: Publish and run LinkShelf tests
         shell: pwsh
         run: |
           dotnet publish Source/Tests/LinkShelf.Tests.csproj -c Release -r win-x64 --self-contained false -o dist-tests
           dotnet ./dist-tests/LinkShelf.Tests.dll
+
+      - name: Publish and run Mover native tests
+        shell: pwsh
+        run: |
+          dotnet publish Tools/LinkShelfMover.Tests/LinkShelfMover.Tests.csproj -c Release -r win-x64 --self-contained false -o dist-mover-tests
+          dotnet ./dist-mover-tests/LinkShelfMover.Tests.dll
 
       - name: Package portable ZIP with source
         shell: pwsh
@@ -39,19 +49,38 @@ jobs:
           foreach ($file in @('LinkShelf.exe','LinkShelf.dll','LinkShelf.deps.json','LinkShelf.runtimeconfig.json')) {
             Copy-Item -LiteralPath (Join-Path 'dist' $file) -Destination $stage
           }
+          foreach ($file in @('LinkShelfMover.exe','LinkShelfMover.dll','LinkShelfMover.deps.json','LinkShelfMover.runtimeconfig.json')) {
+            Copy-Item -LiteralPath (Join-Path 'dist-mover' $file) -Destination $stage
+          }
           $tests = Join-Path $stage 'Tests'
           New-Item -ItemType Directory -Path $tests -Force | Out-Null
           foreach ($file in @('LinkShelf.Tests.exe','LinkShelf.Tests.dll','LinkShelf.Tests.deps.json','LinkShelf.Tests.runtimeconfig.json')) {
             Copy-Item -LiteralPath (Join-Path 'dist-tests' $file) -Destination $tests
           }
+          foreach ($file in @('LinkShelfMover.Tests.exe','LinkShelfMover.Tests.dll','LinkShelfMover.Tests.deps.json','LinkShelfMover.Tests.runtimeconfig.json')) {
+            Copy-Item -LiteralPath (Join-Path 'dist-mover-tests' $file) -Destination $tests
+          }
+          # Mover tests reference the Mover assembly; keep it next to their EXE.
+          Copy-Item -LiteralPath 'dist-mover-tests/LinkShelfMover.dll' -Destination $tests
           Copy-Item -LiteralPath 'Tests/Run_Tests.cmd' -Destination $tests
+          Copy-Item -LiteralPath 'Tools/LinkShelfMover.Tests/Run_Mover_Tests.cmd' -Destination $tests
           Copy-Item -LiteralPath 'README.txt','README.md','README.en.md','LICENSE','CHANGELOG.md','RELEASE_NOTES.md','THIRD_PARTY_NOTICES.md' -Destination $stage
+          Copy-Item -LiteralPath 'Tools/LinkShelfMover/README.md' -Destination (Join-Path $stage 'README_Mover.md')
           $sourceRoot = (Resolve-Path 'Source').Path
           Get-ChildItem -LiteralPath 'Source' -Recurse -File |
             Where-Object { $_.FullName -notmatch '[\\/](bin|obj)[\\/]' } |
             ForEach-Object {
               $relative = [System.IO.Path]::GetRelativePath($sourceRoot, $_.FullName)
               $target = Join-Path (Join-Path $stage 'Source') $relative
+              New-Item -ItemType Directory -Path (Split-Path $target) -Force | Out-Null
+              Copy-Item -LiteralPath $_.FullName -Destination $target
+            }
+          $toolsRoot = (Resolve-Path 'Tools').Path
+          Get-ChildItem -LiteralPath 'Tools' -Recurse -File |
+            Where-Object { $_.FullName -notmatch '[\\/](bin|obj)[\\/]' } |
+            ForEach-Object {
+              $relative = [System.IO.Path]::GetRelativePath($toolsRoot, $_.FullName)
+              $target = Join-Path (Join-Path $stage 'Tools') $relative
               New-Item -ItemType Directory -Path (Split-Path $target) -Force | Out-Null
               Copy-Item -LiteralPath $_.FullName -Destination $target
             }

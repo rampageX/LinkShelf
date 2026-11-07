@@ -1,10 +1,10 @@
-﻿LinkShelf 0.1.6 Stable
+﻿LinkShelf 1.0.0 Stable
 
-v0.1.6：目标文件夹逻辑大小永久缓存，按 Everything 实例保存链接快照；新发现的链接绿色高亮置顶，和原有链接之间仅保留细暗色分隔带。主工具栏紧凑单行、悬停提示统一暗色。
+v1.0.0：主程序 LinkShelf.exe 管理已有链接，新增 LinkShelfMover.exe 安全迁移普通 NTFS 文件夹并在原位置建立目录连接点 /J 或目录符号链接 /D（默认 /J）。两个工具同包发布。永久文件夹大小缓存、Everything 实例链接快照及新链接高亮置顶继续保留。
 
-运行：解压整个文件夹，双击 LinkShelf.exe。
+运行：完整解压发布包，双击 LinkShelf.exe（管理）或 LinkShelfMover.exe（迁移）。
 EXE 图标与窗口左上角统一使用 Windows Forms 标准图标；鼠标悬停及文件属性可查看文件版本、产品版本、说明、作者标识和版权信息。
-要求：Windows 10/11 x64、.NET 8 Desktop Runtime x64；Everything 客户端已运行。
+要求：Windows 10/11 x64、.NET 8 Desktop Runtime x64；使用 LinkShelf.exe 时 Everything 客户端需已运行，Mover 不需要 Everything。
 如缺少运行时： https://dotnet.microsoft.com/zh-cn/download/dotnet/8.0
 选择 .NET Desktop Runtime 的 Windows x64 安装程序。
 
@@ -34,21 +34,31 @@ EXE 图标与窗口左上角统一使用 Windows Forms 标准图标；鼠标悬�
 - Everything 未索引的盘符或被排除的目录不会出现在列表；不会重新遍历全盘寻找链接。
 
 写操作：
-- 首版不搬迁普通文件夹，修改指向不移动文件。
+- 管理器的“修改指向”不搬迁文件；普通文件夹搬迁使用独立的 LinkShelfMover.exe。
 - 删除仅删除打开并核实过的链接对象，不递归删除目标。
 - 修改指向通过重解析点句柄更新，并检查旧关系是否变化。
 - 写操作前在 LinkShelf.operations.jsonl 记录旧路径、目标和原始重解析数据。
 - 新建链接路径必须不存在，目标目录必须存在。符号链接可能需要开发者模式或管理员权限。
 - 目标处于使用中时请退出相关软件后再管理。
 
+Mover 快速使用：
+1. 运行 LinkShelfMover.exe，按“加入「发送到」菜单”，此操作仅为当前用户创建 SendTo 快捷方式，不注册 Shell 扩展、不安装服务。
+2. 资源管理器右键单个普通文件夹 → 发送到 → LinkShelf - 移动并建立目录连接点。
+3. 选择目标父目录。例如 C:\A 搬往 D:\B，则自动填写 D:\B\A；可手动编辑最终目标路径。
+4. 选择“目录连接点 /J”（默认）或“目录符号链接 /D”，检查源目录、目标目录和文件占用后，点击“检查并开始迁移”。
+5. 复制、校验通过后才切换原路径为链接；如遇错误 5 可选择 UAC 提权重开，源/目标/类型会保留，但需要再次手动确认迁移。
+6. 搬迁操作真实修改数据，跨磁盘不可能完全原子化；重要目录请先备份，退出正在使用该目录的软件。
+7. 需要更换 Mover.exe 所在目录时，请从旧位置移除「发送到」快捷方式，再从新位置重新安装。
+更多注意事项及故障恢复说明见 README_Mover.md。
+
 验证状态：
 已通过 C# 编译和 32 项跨平台核心检查（重解析数据、Unicode、IPC边界、相同/嵌套/别名去重、缓存恢复与隔离、新链接识别及分组排序）。
 首版 23 项 Windows 原生操作检查已由用户通过，v0.1.4 界面及功能由用户在 Windows 本机验收通过。
-v0.1.6 预览版的新链接识别、排序、分隔与暗色布局已由用户在 Windows 本机确认；最新正式版由 GitHub Actions 在 Windows 上额外编译并运行原生测试。
+v1.0.0 主程序界面与新链接检测已由用户在 Windows 本机验收，Mover 的 /J 与 /D 搬迁也均由用户实际测试成功；正式发布由 GitHub Actions 在 Windows 上额外编译两个 EXE 并运行两组原生测试。
 具体运行环境与文件系统不同，使用重要目录前仍建议自行备份。
-首次测试先在 Tests 目录运行 Run_Tests.cmd：只在临时测试目录操作，验证连接点创建/改向/删除及目标保留。
+首次测试先在 Tests 目录运行 Run_Tests.cmd、Run_Mover_Tests.cmd：只在临时测试目录操作，验证链接创建、搬迁、目标冲突与回退保护。
 测试目录会在结束时清理；测试写操作日志保存在 Tests 目录。
 再在主程序核对列表和大小。重要目录的实际改向和删除请待本机测试通过后使用。
 
-Source 内附完整源码与 build.cmd，需 .NET 8 SDK 构建。
+Source、Tools 内附两个程序的完整源码，需 .NET 8 SDK 构建。
 本程序用 Windows IPC 直接连接 Everything，不附带、不修改 Everything，也不新建其索引。

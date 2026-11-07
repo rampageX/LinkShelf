@@ -2,9 +2,9 @@
 
 [English](README.en.md) · Windows 目录连接点与目录符号链接管理工具
 
-LinkShelf 是一款轻量、暗色、便携的 Windows 文件夹链接管理器。它直接使用**已经运行的 Everything 实例**查询索引中的目录链接，不重扫所有硬盘、不创建第二套索引。适合把占用系统盘的应用目录迁往其他本地磁盘后，集中查看和管理这些链接。
+LinkShelf 是一套轻量、暗色、便携的 Windows 文件夹链接工具：**LinkShelf.exe** 负责集中查看和管理链接，**LinkShelfMover.exe** 负责将普通文件夹安全迁往其他本地磁盘，并在原位置建立链接。主程序直接使用**已经运行的 Everything 实例**查询索引，不重扫所有硬盘、不创建第二套索引；Mover 独立运行，无需 Everything。
 
-**当前稳定版：v0.1.6**。新增永久文件夹大小缓存、按 Everything 实例记忆链接列表；新发现的链接绿色高亮并始终置顶，与原有链接之间使用无文字的细暗色分隔条。
+**当前稳定版：v1.0.0**。首次在同一发布包内提供管理器与「移动并创建链接」工具，支持 `/J` 目录连接点、`/D` 目录符号链接；永久大小缓存和新链接置顶继续保留。
 
 ## 功能
 
@@ -17,15 +17,22 @@ LinkShelf 是一款轻量、暗色、便携的 Windows 文件夹链接管理器�
 - 目标文件夹大小跨启动缓存，统计信息末尾显示缓存创建时间及“更新”文字链接；新增链接在其分组内继续遵守当前列排序。
 - 单行响应式工具栏、自绘暗色悬停提示和深色下拉列表。
 
+### LinkShelf Mover：右键一键搬家
+
+- 运行 `LinkShelfMover.exe`，点击“加入「发送到」菜单”，即可在资源管理器对**单个普通文件夹**右键 → **发送到 → LinkShelf - 移动并建立目录连接点**。仅创建当前用户的快捷方式；不注册 Shell 扩展、不修改注册表。
+- 例如右键 `C:\A`，在界面中选择目的地父目录 `D:\B`，自动生成可编辑的完整目标路径 `D:\B\A`。
+- 选择**目录连接点 `/J`（默认）**或**目录符号链接 `/D`**，预检通过后先复制、核验，再切换原目录为链接；遇到访问被拒绝可提示 UAC 提权重新打开，保留已填路径及链接类型，**不会未经确认自动执行**。
+- 支持进度与取消、迁移日志、异常恢复提示，记忆窗口位置。详情请读 [Mover 使用说明](Tools/LinkShelfMover/README.md)。
+
 ## 下载与运行
 
-从 [v0.1.6 Release](https://github.com/rampageX/LinkShelf/releases/tag/v0.1.6) 下载 `LinkShelf_v0.1.6_Windows_x64.zip`，解压后运行 `LinkShelf.exe`。
+从 [v1.0.0 Release](https://github.com/rampageX/LinkShelf/releases/tag/v1.0.0) 下载 `LinkShelf_v1.0.0_Windows_x64.zip` 并**完整解压**。运行 `LinkShelf.exe` 管理链接，或运行同目录的 `LinkShelfMover.exe` 迁移普通文件夹。
 
 要求：
 
 1. Windows 10/11 x64。
 2. [Microsoft .NET 8 Desktop Runtime x64](https://dotnet.microsoft.com/download/dotnet/8.0)。
-3. 正在运行、已完成索引的 [Everything](https://www.voidtools.com/) 客户端。
+3. 使用 LinkShelf 管理器时，需要正在运行、已完成索引的 [Everything](https://www.voidtools.com/) 客户端；单独使用 Mover 时不需要。
 
 LinkShelf 不包含 Everything，不修改其索引。发现范围由你选择的 Everything 实例决定。
 
@@ -38,8 +45,8 @@ LinkShelf 不包含 Everything，不修改其索引。发现范围由你选择�
 - 默认隐藏带系统属性的链接；带系统属性的链接和卷挂载点只读。
 - 默认不扫描网络目标的大小，也不统计网络目标的 C 盘转出量。
 - 删除操作只删除链接对象，**不会递归删除目标文件夹及文件**。
-- 修改指向不会移动文件；所有写操作前均记录 `LinkShelf.operations.jsonl`。
-- 首个正式版本**不提供普通文件夹迁移**。请自行完成数据迁移后再创建链接。
+- 管理器的“修改指向”不会移动文件；所有链接写操作前均记录 `LinkShelf.operations.jsonl`。
+- 普通文件夹迁移由独立的 `LinkShelfMover.exe` 执行，**会真实移动数据**。它只接受本地 NTFS 普通文件夹，拒绝危险目录、内部重解析点、加密及硬链接等不安全情况。跨盘操作不可能做到真正的原子事务；重要目录请先备份并退出相关软件。
 - “C 盘已转出数据”是当前逻辑文件大小的估算，不代表历史释放的磁盘空间或实际物理占用；未计算和部分结果会明确标识。
 
 涉及重要目录时，请先退出占用该目录的软件，并确认目标和备份。
@@ -50,13 +57,14 @@ LinkShelf 不包含 Everything，不修改其索引。发现范围由你选择�
 
 ```powershell
 dotnet publish Source/LinkShelf.csproj -c Release -r win-x64 --self-contained false -o Build
+dotnet publish Tools/LinkShelfMover/LinkShelfMover.csproj -c Release -r win-x64 --self-contained false -o Build/Mover
 ```
 
-项目源代码位于 `Source/`；测试源代码位于 `Source/Tests/`。完整运行包还提供测试程序，`Tests/Run_Tests.cmd` 在 Windows 上验证临时目录中的原生链接操作。已配置 GitHub Actions 自动构建与发布。
+主程序源码在 `Source/`，Mover 源码在 `Tools/LinkShelfMover/`。完整运行包包含源码和两套 Windows 原生测试：`Tests/Run_Tests.cmd` 与 `Tests/Run_Mover_Tests.cmd`，仅操作临时测试目录。GitHub Actions 对两个 EXE 分别构建、测试后才发布。
 
 ## 版本
 
-当前稳定版：**v0.1.6**（首个稳定版 v0.1.4）。详细变更见 [CHANGELOG.md](CHANGELOG.md)。
+当前稳定版：**v1.0.0**。详细变更见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 许可证
 

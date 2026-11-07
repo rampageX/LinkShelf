@@ -40,7 +40,7 @@ public sealed class MainForm : Form
     readonly System.Windows.Forms.Timer filterTimer = new() { Interval = 180 };
     public MainForm()
     {
-        Text = "LinkShelf · 目录链接管理  0.1.6";
+        Text = "LinkShelf · 目录链接管理  1.0.0";
         MinimumSize = new Size(980,620); ClientSize = new Size(1220,760);
         AutoScaleMode = AutoScaleMode.Dpi;
         DoubleBuffered = true;
@@ -67,7 +67,7 @@ public sealed class MainForm : Form
         AddButton(toolbar,"导出清单", (_,_) => Export());
         stop = Dark.Button("停止", (_,_) => work?.Cancel(),75); stop.Enabled = false; toolbar.Controls.Add(stop);
         var help = Dark.Button("说明", (_,_) => Dark.Message(this,"统计与操作说明",
-            "链接发现直接查询 Everything 当前实例的已有索引，不重建索引。范围取决于该实例的索引设置。\r\n\r\n“连接 / 刷新”只更新 Everything 发现的链接列表，不重新统计已有目标大小。“计算当前列表”优先复用永久大小缓存，仅扫描未计算的目标。第二行末尾“缓存大小 · 更新”强制重算当前实例全部本地非系统目标；右键可重算所选。不会跟随内部重解析点，网络目标暂不统计。\r\n\r\n永久缓存：LinkShelf.sizes.json 保存在程序旁，第二行显示创建时间。目录数据发生变化后请手动更新。LinkShelf.links.json 记录各 Everything 实例上次成功发现的链接；首次运行建立基线，之后新链接以绿色标出。\r\n\r\nC 盘已转出数据：按所有已发现的非系统属性链接计算，与搜索筛选无关；只累计 C: 链接指向其他本地盘的当前逻辑文件大小。相同目标和嵌套目标去重。未计算和部分结果会明确标出。\r\n\r\n这是当前数据量估算，不是历史释放空间或物理占用：压缩、稀疏文件、硬链接会造成差异。扫描过程中文件变化也可能影响结果。\r\n\r\n删除仅删除链接本身；修改指向不移动文件。所有写操作前记录 LinkShelf.operations.jsonl。卷挂载点与带系统属性的链接只读。\r\n\r\n首版不搬迁普通文件夹。请先退出使用该目录的软件，再用已有方式搬迁并建立链接，随后刷新核对。"),70); toolbar.Controls.Add(help);
+            "链接发现直接查询 Everything 当前实例的已有索引，不重建索引。范围取决于该实例的索引设置。\r\n\r\n“连接 / 刷新”只更新 Everything 发现的链接列表，不重新统计已有目标大小。“计算当前列表”优先复用永久大小缓存，仅扫描未计算的目标。第二行末尾“缓存大小 · 更新”强制重算当前实例全部本地非系统目标；右键可重算所选。不会跟随内部重解析点，网络目标暂不统计。\r\n\r\n永久缓存：LinkShelf.sizes.json 保存在程序旁，第二行显示创建时间。目录数据发生变化后请手动更新。LinkShelf.links.json 记录各 Everything 实例上次成功发现的链接；首次运行建立基线，之后新链接以绿色标出。\r\n\r\nC 盘已转出数据：按所有已发现的非系统属性链接计算，与搜索筛选无关；只累计 C: 链接指向其他本地盘的当前逻辑文件大小。相同目标和嵌套目标去重。未计算和部分结果会明确标出。\r\n\r\n这是当前数据量估算，不是历史释放空间或物理占用：压缩、稀疏文件、硬链接会造成差异。扫描过程中文件变化也可能影响结果。\r\n\r\n删除仅删除链接本身；修改指向不移动文件。所有写操作前记录 LinkShelf.operations.jsonl。卷挂载点与带系统属性的链接只读。\r\n\r\n普通文件夹迁移请使用同包的 LinkShelfMover.exe；可在资源管理器“发送到”菜单调用，迁移后自动建立目录连接点 /J 或符号链接 /D。涉及重要数据时请备份并退出占用软件，迁移后在 LinkShelf 刷新核对。"),70); toolbar.Controls.Add(help);
         var filters = new DarkFlowLayoutPanel { AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, WrapContents = false, Padding = new Padding(0,4,0,0), Margin = Padding.Empty };
         state.Items.AddRange(["全部状态", "尚未计算", "正常", "异常 / 部分"]); state.SelectedIndex = 0;
         filters.Controls.Add(search); filters.Controls.Add(hideSystem); filters.Controls.Add(onlyC); filters.Controls.Add(state);
