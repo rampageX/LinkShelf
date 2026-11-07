@@ -1,0 +1,12 @@
+.vs/
+**/bin/
+**/obj/
+Build/
+Dist/
+TestResults/
+*.user
+*.suo
+*.pdb
+LinkShelf.settings.json
+LinkShelf.operations.jsonl
+*.tmp

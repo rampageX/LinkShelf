@@ -1,0 +1,95 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [master]
+    tags: ['v*']
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Windows x64 build and native tests
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Publish LinkShelf
+        shell: pwsh
+        run: dotnet publish Source/LinkShelf.csproj -c Release -r win-x64 --self-contained false -o dist
+
+      - name: Publish and run tests
+        shell: pwsh
+        run: |
+          dotnet publish Source/Tests/LinkShelf.Tests.csproj -c Release -r win-x64 --self-contained false -o dist-tests
+          dotnet ./dist-tests/LinkShelf.Tests.dll
+
+      - name: Package portable ZIP with source
+        shell: pwsh
+        run: |
+          $stage = Join-Path $env:RUNNER_TEMP 'LinkShelfPortable'
+          New-Item -ItemType Directory -Path $stage -Force | Out-Null
+          foreach ($file in @('LinkShelf.exe','LinkShelf.dll','LinkShelf.deps.json','LinkShelf.runtimeconfig.json')) {
+            Copy-Item -LiteralPath (Join-Path 'dist' $file) -Destination $stage
+          }
+          $tests = Join-Path $stage 'Tests'
+          New-Item -ItemType Directory -Path $tests -Force | Out-Null
+          foreach ($file in @('LinkShelf.Tests.exe','LinkShelf.Tests.dll','LinkShelf.Tests.deps.json','LinkShelf.Tests.runtimeconfig.json')) {
+            Copy-Item -LiteralPath (Join-Path 'dist-tests' $file) -Destination $tests
+          }
+          Copy-Item -LiteralPath 'Tests/Run_Tests.cmd' -Destination $tests
+          Copy-Item -LiteralPath 'README.txt','LICENSE','CHANGELOG.md','THIRD_PARTY_NOTICES.md' -Destination $stage
+          $sourceRoot = (Resolve-Path 'Source').Path
+          Get-ChildItem -LiteralPath 'Source' -Recurse -File |
+            Where-Object { $_.FullName -notmatch '[\\/](bin|obj)[\\/]' } |
+            ForEach-Object {
+              $relative = [System.IO.Path]::GetRelativePath($sourceRoot, $_.FullName)
+              $target = Join-Path (Join-Path $stage 'Source') $relative
+              New-Item -ItemType Directory -Path (Split-Path $target) -Force | Out-Null
+              Copy-Item -LiteralPath $_.FullName -Destination $target
+            }
+          $tag = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME } else { 'ci' }
+          $archive = Join-Path $PWD "LinkShelf_${tag}_Windows_x64.zip"
+          Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $archive -Force
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LinkShelf-windows-x64
+          path: LinkShelf_*.zip
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: LinkShelf-windows-x64
+      - name: Create release or upload asset
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          shopt -s nullglob
+          files=(LinkShelf_*.zip)
+          if ((${#files[@]} != 1)); then
+            echo "Expected exactly one LinkShelf ZIP" >&2
+            exit 1
+          fi
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" "${files[0]}" --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" "${files[0]}" --title "LinkShelf $GITHUB_REF_NAME" --notes-file RELEASE_NOTES.md
+          fi

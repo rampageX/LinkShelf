@@ -1,0 +1,6 @@
+LinkShelf.ico 是 WinForms 默认 Form 图标 (wfc)。
+来源：Microsoft 官方 dotnet-samples 项目
+https://github.com/microsoft/dotnet-samples/blob/master/WinForms-HDPI/PerMonitorAware/wfc.ico
+与应用原有窗口标题栏显示的默认图标相同。
+上游项目使用 MIT License，Copyright (c) 2014 Microsoft Corporation。
+详见仓库根目录 THIRD_PARTY_NOTICES.md。
