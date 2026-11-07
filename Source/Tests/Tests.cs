@@ -33,6 +33,15 @@ static class Tests
             var alias=new LinkRow{Path=@"C:\alias",Target=@"E:\alias",Size=new SizeResult(1,1,0,0,true,"正常","",@"D:\data")};
             Check(Paths.UniqueRoots(new[]{r1,alias}).Count==1,"resolved alias deduplication");
             Check(!new LinkRow{Path=@"C:\a",Target=@"D:\alias",Size=new SizeResult(1,1,0,0,true,"正常","",@"C:\real")}.Offloaded,"alias back to C excluded");
+            var missing=new LinkRow{Path=@"C:\missing",Target=@"D:\data",Size=new SizeResult(0,0,1,0,false,"目标不存在")};
+            var validChild=new LinkRow{Path=@"C:\child",Target=@"D:\data\child",Size=new SizeResult(4096,1,0,0,true,"正常")};
+            var countable=Paths.CountableOffloads(new[]{missing,validChild});
+            Check(Paths.IsMissingTarget(missing) && !Paths.IsMissingTarget(validChild) &&
+                  countable.SequenceEqual(new[]{validChild}),"missing target excluded from offload accounting");
+            Check(Paths.UniqueRoots(countable).Single()==validChild,"missing parent cannot suppress valid child total");
+            var inaccessible=new LinkRow{Path=@"C:\partial",Target=@"E:\partial",Size=new SizeResult(1024,2,1,0,false,"部分大小 · 有读取失败")};
+            Check(Paths.CountableOffloads(new[]{missing,inaccessible}).Single()==inaccessible,
+                  "permission and partial scan errors remain in offload accounting");
             byte[] name=Encoding.Unicode.GetBytes("缓存\0"),parent=Encoding.Unicode.GetBytes("C:\\\0");
             byte[] packet=new byte[40+name.Length+parent.Length];
             void W(int off,uint v)=>BitConverter.GetBytes(v).CopyTo(packet,off);
@@ -124,6 +133,8 @@ static class Tests
             var size=SizeScanner.Scan(a,default);Check(size.Complete&&size.Bytes==4&&size.Files==1,"native target size");
             Reparse.Create(link,a,Reparse.Mount);Directory.Delete(a,true);
             Check(Reparse.Read(link).Target==a,"broken junction target remains readable");
+            var missingSize=SizeScanner.Scan(a,default);
+            Check(missingSize.Status=="目标不存在" && !missingSize.Complete,"native missing target reported separately");
             Reparse.Delete(Reparse.Read(link));Check(!Directory.Exists(link),"broken junction deletion");
         }
         finally { if(Directory.Exists(root))Directory.Delete(root,true); }

@@ -25,6 +25,11 @@ public static class Paths
     public static bool IsDrive(string p, char drive) => p.Length >= 3 && char.ToUpperInvariant(p[0]) == char.ToUpperInvariant(drive) && p[1] == ':' && p[2] == '\\';
     public static bool IsLocalDrive(string p) => p.Length >= 3 && char.IsAsciiLetter(p[0]) && p[1] == ':' && p[2] == '\\';
     public static bool Contains(string parent, string child) => child.Equals(parent, StringComparison.OrdinalIgnoreCase) || child.StartsWith(parent.TrimEnd('\\') + "\\", StringComparison.OrdinalIgnoreCase);
+    public static bool IsMissingTarget(LinkRow row) => row.Size?.Status == "目标不存在";
+    // A missing target has no measurable bytes and must not shadow a valid
+    // descendant during target-root deduplication or count as a partial scan.
+    public static List<LinkRow> CountableOffloads(IEnumerable<LinkRow> rows) =>
+        rows.Where(r => r.Offloaded && !r.IsSystem && !IsMissingTarget(r)).ToList();
     public static string Format(long bytes)
     {
         string[] u = ["B", "KiB", "MiB", "GiB", "TiB"];
