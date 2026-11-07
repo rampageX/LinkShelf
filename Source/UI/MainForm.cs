@@ -15,7 +15,7 @@ public sealed class MainForm : Form
     readonly DarkComboBox state = new() { Width = 145 };
     readonly DataGridView grid = new();
     readonly Label total = new() { Text = "C 盘已转出数据  —", AutoSize = true, Font = new Font("Microsoft YaHei UI",18,FontStyle.Bold) };
-    readonly LinkLabel cacheInfo = new() { Text = "缓存大小：尚未创建 · 更新", AutoSize = true,
+    readonly LinkLabel cacheInfo = new() { Text = "创建时间：尚未创建 · 更新", AutoSize = true,
         Anchor = AnchorStyles.Right, LinkBehavior = LinkBehavior.HoverUnderline,
         Margin = new Padding(12,0,3,0) };
     readonly DarkEllipsisLabel summary = new() { Text = "连接正在运行的 Everything，读取已有索引",
@@ -40,7 +40,7 @@ public sealed class MainForm : Form
     readonly System.Windows.Forms.Timer filterTimer = new() { Interval = 180 };
     public MainForm()
     {
-        Text = "LinkShelf · 目录链接管理  1.0.2";
+        Text = "LinkShelf · 目录链接管理  1.0.3";
         MinimumSize = new Size(980,620); ClientSize = new Size(1220,760);
         AutoScaleMode = AutoScaleMode.Dpi;
         DoubleBuffered = true;
@@ -67,7 +67,7 @@ public sealed class MainForm : Form
         AddButton(toolbar,"导出清单", (_,_) => Export());
         stop = Dark.Button("停止", (_,_) => work?.Cancel(),75); stop.Enabled = false; toolbar.Controls.Add(stop);
         var help = Dark.Button("说明", (_,_) => Dark.Message(this,"统计与操作说明",
-            "链接发现直接查询 Everything 当前实例的已有索引，不重建索引。范围取决于该实例的索引设置。\r\n\r\n“连接 / 刷新”只更新 Everything 发现的链接列表，不重新统计已有目标大小。“计算当前列表”优先复用永久大小缓存，仅扫描未计算的目标。第二行末尾“缓存大小 · 更新”强制重算当前实例全部本地非系统目标；右键可重算所选。不会跟随内部重解析点，网络目标暂不统计。\r\n\r\n永久缓存：LinkShelf.sizes.json 保存在程序旁，第二行显示创建时间。目录数据发生变化后请手动更新。LinkShelf.links.json 记录各 Everything 实例上次成功发现的链接；首次运行建立基线，之后新链接以绿色标出。\r\n\r\nC 盘已转出数据：按所有已发现的非系统属性链接计算，与搜索筛选无关；只累计 C: 链接指向其他本地盘的当前逻辑文件大小。相同目标和嵌套目标去重。未计算和部分结果会明确标出。\r\n\r\n这是当前数据量估算，不是历史释放空间或物理占用：压缩、稀疏文件、硬链接会造成差异。扫描过程中文件变化也可能影响结果。\r\n\r\n删除仅删除链接本身；修改指向不移动文件。所有写操作前记录 LinkShelf.operations.jsonl。卷挂载点与带系统属性的链接只读。\r\n\r\n普通文件夹迁移请使用同包的 LinkShelfMover.exe；可在资源管理器“发送到”菜单调用，迁移后自动建立目录连接点 /J 或符号链接 /D。涉及重要数据时请备份并退出占用软件，迁移后在 LinkShelf 刷新核对。"),70); toolbar.Controls.Add(help);
+            "链接发现直接查询 Everything 当前实例的已有索引，不重建索引。范围取决于该实例的索引设置。\r\n\r\n“连接 / 刷新”只更新 Everything 发现的链接列表，不重新统计已有目标大小。“计算当前列表”优先复用永久大小缓存，仅扫描未计算的目标。第二行末尾的“更新”链接强制重算当前实例全部本地非系统目标；右键可重算所选。不会跟随内部重解析点，网络目标暂不统计。\r\n\r\n永久缓存：LinkShelf.sizes.json 保存在程序旁，第二行显示创建时间及最近更新时间。目录数据发生变化后请手动更新。LinkShelf.links.json 记录各 Everything 实例上次成功发现的链接；首次运行建立基线，之后新链接以绿色标出。\r\n\r\nC 盘已转出数据：按所有已发现的非系统属性链接计算，与搜索筛选无关；只累计 C: 链接指向其他本地盘的当前逻辑文件大小。相同目标和嵌套目标去重。未计算和部分结果会分别标出。\r\n\r\n这是当前数据量估算，不是历史释放空间或物理占用：压缩、稀疏文件、硬链接会造成差异。扫描过程中文件变化也可能影响结果。\r\n\r\n删除仅删除链接本身；修改指向不移动文件。所有写操作前记录 LinkShelf.operations.jsonl。卷挂载点与带系统属性的链接只读。\r\n\r\n普通文件夹迁移请使用同包的 LinkShelfMover.exe；可在资源管理器“发送到”菜单调用，迁移后自动建立目录连接点 /J 或符号链接 /D。涉及重要数据时请备份并退出占用软件，迁移后在 LinkShelf 刷新核对。"),70); toolbar.Controls.Add(help);
         var filters = new DarkFlowLayoutPanel { AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, WrapContents = false, Padding = new Padding(0,4,0,0), Margin = Padding.Empty };
         state.Items.AddRange(["全部状态", "尚未计算", "正常", "异常 / 部分"]); state.SelectedIndex = 0;
         filters.Controls.Add(search); filters.Controls.Add(hideSystem); filters.Controls.Add(onlyC); filters.Controls.Add(state);
@@ -174,11 +174,15 @@ public sealed class MainForm : Form
     { var b = Dark.Button(name,action,width); panel.Controls.Add(b); actions.Add(b); }
     void UpdateCacheInfo()
     {
-        cacheInfo.Text = persistent.SizeLoadFailed ? "缓存大小：读取失败 · 更新"
-            : persistent.CreatedUtc is { } created ? $"缓存大小：{created.ToLocalTime():yyyy-MM-dd HH:mm} 创建 · 更新"
-            : "缓存大小：尚未创建 · 更新";
+        string updatedAt = persistent.UpdatedUtc is { } updated
+            ? $"：{updated.ToLocalTime():yyyy-MM-dd HH:mm}" : "";
+        cacheInfo.Text = persistent.SizeLoadFailed ? "缓存读取失败 · 更新"
+            : persistent.CreatedUtc is { } created
+                ? $"创建时间：{created.ToLocalTime():yyyy-MM-dd HH:mm} · 更新{updatedAt}"
+                : "创建时间：尚未创建 · 更新";
         cacheInfo.Links.Clear();
-        cacheInfo.Links.Add(cacheInfo.Text.Length - 2,2);
+        int updateLink = cacheInfo.Text.IndexOf(" · 更新", StringComparison.Ordinal);
+        if (updateLink >= 0) cacheInfo.Links.Add(updateLink + " · ".Length, 2);
     }
     void RestoreWindow()
     {
@@ -428,7 +432,9 @@ public sealed class MainForm : Form
         var eligible=rows.Where(r=>r.Offloaded && !r.IsSystem).ToList();
         var roots=Paths.UniqueRoots(eligible); long size=roots.Sum(r=>r.Size?.Bytes??0);
         int pending=roots.Count(r=>r.Size==null),partial=roots.Count(r=>r.Size is {Complete:false});
-        total.Text=$"C 盘已转出数据  {Paths.Format(size)}"+(pending>0||partial>0?"  · 待完整统计":"");
+        string countStatus = (pending>0?$"  · {pending} 项待计算":"")+
+            (partial>0?$"  · {partial} 项部分/异常":"");
+        total.Text=$"C 盘已转出数据  {Paths.Format(size)}"+countStatus;
         int added=rows.Count(r=>newPaths.Contains(r.Path));
         summary.Text=$"显示 {grid.Rows.Count:N0} / 共 {rows.Count:N0} 个链接"+(added>0?$"    新发现 {added:N0} 项（绿色）":"")+
             $"    C 盘转出 {eligible.Count:N0} 项 → 去重 {roots.Count:N0} 个目标    未计算 {pending} · 部分/异常 {partial}    按当前逻辑大小估算";

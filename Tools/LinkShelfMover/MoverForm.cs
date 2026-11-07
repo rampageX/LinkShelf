@@ -30,7 +30,7 @@ public sealed class MoverForm : Form
     public MoverForm(string source, string destination = "", uint initialLinkTag = Reparse.Mount)
     {
         SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint, true);
-        Text = "LinkShelf Mover · 移动目录并创建链接 · 1.0.2";
+        Text = "LinkShelf Mover · 移动目录并创建链接 · 1.0.3";
         ClientSize = new Size(920, 530);
         MinimumSize = new Size(810, 505);
         StartPosition = FormStartPosition.CenterScreen;

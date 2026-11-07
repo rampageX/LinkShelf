@@ -4,7 +4,7 @@
 
 LinkShelf is a portable, dark-themed Windows folder-link toolkit with two executables: **LinkShelf.exe** manages existing links using an **already running Everything instance** over IPC (no full-disk rescan), while **LinkShelfMover.exe** migrates ordinary folders and creates links at their original locations without requiring Everything.
 
-**Current stable release: v1.0.2**. Both the manager and folder mover ship together. Mover now offers an optional per-user, top-level folder context menu alongside the existing SendTo shortcut. Folder-size caches and newly discovered link highlights remain unchanged.
+**Current stable release: v1.0.3**. Both the manager and folder mover ship together. The manager now shows cache creation and last-update timestamps around the clickable Update action, and distinguishes unmeasured targets from incomplete/error results. Mover retains its optional per-user direct context-menu entry and SendTo shortcut.
 
 ### Highlights
 
@@ -14,7 +14,7 @@ LinkShelf is a portable, dark-themed Windows folder-link toolkit with two execut
 - Calculate logical target folder sizes on demand, skipping nested reparse points, with cancellation and persistent caching.
 - Estimate logical data offloaded from `C:` to other local drives while deduplicating identical, nested, and resolved alias targets.
 - Dark UI, remembered layout, adaptive columns, and reduced repainting.
-- Responsive single-row toolbar, dark custom tooltips, per-Everything-instance link snapshots, and a text link for refreshing cached sizes.
+- Responsive single-row toolbar, dark custom tooltips, per-Everything-instance link snapshots, and a text link between the cache creation and last-update timestamps for refreshing cached sizes.
 - **Mover:** Install either **添加一级右键菜单** (Add direct folder menu) or the existing SendTo shortcut. The direct action is **使用 LinkShelf Mover 迁移** (Move with LinkShelf Mover), shown in the classic context menu; Windows 11 may require **Show more options**. Both entries can be removed independently. Select the destination parent directory, then edit the generated full path if desired. Choose a junction (`/J`, default) or directory symlink (`/D`).
 - **Mover safety:** Validates source, permissions, free space, and destination; copies and hashes data before replacing the original path with a verified link. Requests UAC elevation on access-denied errors, preserving the requested paths and type for explicit reconfirmation. No shell extensions or services: the direct menu uses a removable static verb under the current user's registry, while SendTo uses only a shortcut.
 
@@ -22,9 +22,9 @@ LinkShelf is a portable, dark-themed Windows folder-link toolkit with two execut
 
 Windows 10/11 x64 and [.NET 8 Desktop Runtime x64](https://dotnet.microsoft.com/download/dotnet/8.0). The manager additionally requires a running [Everything](https://www.voidtools.com/) client with an existing index; Mover does not.
 
-Download `LinkShelf_v1.0.2_Windows_x64.zip` from the [v1.0.2 Release](https://github.com/rampageX/LinkShelf/releases/tag/v1.0.2), extract the entire ZIP, and run either `LinkShelf.exe` or `LinkShelfMover.exe`.
+Download `LinkShelf_v1.0.3_Windows_x64.zip` from the [v1.0.3 Release](https://github.com/rampageX/LinkShelf/releases/tag/v1.0.3), extract the entire ZIP, and run either `LinkShelf.exe` or `LinkShelfMover.exe`.
 
-Portable state stays beside the executable: `LinkShelf.sizes.json` holds cached logical sizes and timestamps; `LinkShelf.links.json` holds link snapshots per Everything instance. No existing links are marked as new during first-run baseline creation. **连接 / 刷新** (Connect / Refresh) only refreshes the indexed link list; the **更新** (Update) text link on the second statistics line recalculates folder sizes. Cached sizes are not live measurements.
+Portable state stays beside the executable: `LinkShelf.sizes.json` holds cached logical sizes and timestamps; `LinkShelf.links.json` holds link snapshots per Everything instance. No existing links are marked as new during first-run baseline creation. **连接 / 刷新** (Connect / Refresh) only refreshes the indexed link list; the **更新** (Update) text link on the second statistics line recalculates folder sizes. The heading separately flags pending scans and incomplete/error scans; cached sizes are not live measurements.
 
 ### Important limitations
 
