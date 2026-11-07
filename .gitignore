@@ -2,6 +2,7 @@
 **/bin/
 **/obj/
 Build/
+TestsBuild/
 Dist/
 TestResults/
 *.user
@@ -10,3 +11,7 @@ TestResults/
 LinkShelf.settings.json
 LinkShelf.operations.jsonl
 *.tmp
+LinkShelf.sizes.json
+LinkShelf.links.json
+LinkShelf.sizes.json.*.tmp
+LinkShelf.links.json.*.tmp

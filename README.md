@@ -4,6 +4,8 @@
 
 LinkShelf 是一款轻量、暗色、便携的 Windows 文件夹链接管理器。它直接使用**已经运行的 Everything 实例**查询索引中的目录链接，不重扫所有硬盘、不创建第二套索引。适合把占用系统盘的应用目录迁往其他本地磁盘后，集中查看和管理这些链接。
 
+**当前稳定版：v0.1.6**。新增永久文件夹大小缓存、按 Everything 实例记忆链接列表；新发现的链接绿色高亮并始终置顶，与原有链接之间使用无文字的细暗色分隔条。
+
 ## 功能
 
 - 发现并区分目录连接点 `/J`、目录符号链接 `/D`，排除文件链接和其他重解析点。
@@ -12,10 +14,12 @@ LinkShelf 是一款轻量、暗色、便携的 Windows 文件夹链接管理器�
 - 按需后台计算目标目录的逻辑大小，跳过内部重解析点，支持停止、缓存及强制重算。
 - 统计 C 盘链接指向其他本地盘的当前逻辑数据量，对相同、嵌套、已解析别名的目标去重。
 - 暗色界面、自适应列宽、窗口与列宽记忆、双缓冲防闪烁。
+- 目标文件夹大小跨启动缓存，统计信息末尾显示缓存创建时间及“更新”文字链接；新增链接在其分组内继续遵守当前列排序。
+- 单行响应式工具栏、自绘暗色悬停提示和深色下拉列表。
 
 ## 下载与运行
 
-从 [Releases](https://github.com/rampageX/LinkShelf/releases) 下载 `LinkShelf_v0.1.4_Windows_x64.zip`，解压后运行 `LinkShelf.exe`。
+从 [v0.1.6 Release](https://github.com/rampageX/LinkShelf/releases/tag/v0.1.6) 下载 `LinkShelf_v0.1.6_Windows_x64.zip`，解压后运行 `LinkShelf.exe`。
 
 要求：
 
@@ -24,6 +28,10 @@ LinkShelf 是一款轻量、暗色、便携的 Windows 文件夹链接管理器�
 3. 正在运行、已完成索引的 [Everything](https://www.voidtools.com/) 客户端。
 
 LinkShelf 不包含 Everything，不修改其索引。发现范围由你选择的 Everything 实例决定。
+
+便携数据保存在程序目录：`LinkShelf.sizes.json` 永久保存上次统计的逻辑大小和创建/更新时间；`LinkShelf.links.json` 按 Everything 实例保存上次成功发现的链接路径，首次启动只建立基线，不将旧链接误标为新增。这两个文件不会随发布包附带。
+
+“连接 / 刷新”只重新读取 Everything 的链接列表，不重新计算已有文件夹大小；目录内容改变后，点击第二行末尾“缓存大小”后的“更新”文字链接，可强制重算当前实例发现的本地非系统目标。
 
 ## 安全边界
 
@@ -48,7 +56,7 @@ dotnet publish Source/LinkShelf.csproj -c Release -r win-x64 --self-contained fa
 
 ## 版本
 
-首个稳定版：**v0.1.4**。详细变更见 [CHANGELOG.md](CHANGELOG.md)。
+当前稳定版：**v0.1.6**（首个稳定版 v0.1.4）。详细变更见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 许可证
 

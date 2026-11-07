@@ -43,11 +43,70 @@ static class Tests
             Check(NaturalTextComparer.Instance.Compare("Folder2","Folder10")<0,"natural number ordering");
             Check(NaturalTextComparer.Instance.Compare("a999999999999999999999","a1000000000000000000000")<0,"large numeric names without overflow");
             Check(NaturalTextComparer.Instance.Compare("Cache2","cache2")==0,"case insensitive natural ordering");
+            GroupingTest();
+            PersistenceTest();
             if(OperatingSystem.IsWindows()) NativeTest();
             Console.WriteLine($"{count} checks passed; Windows native checks "+(OperatingSystem.IsWindows()?"executed":"pending on Windows"));
             return 0;
         }
         catch(Exception e){Console.Error.WriteLine(e);return 1;}
+    }
+    static void GroupingTest()
+    {
+        var old1=new LinkRow{Path=@"C:\old1"};
+        var old2=new LinkRow{Path=@"C:\old2"};
+        var fresh2=new LinkRow{Path=@"C:\new2"};
+        var fresh1=new LinkRow{Path=@"C:\new1"};
+        var existingOrder=new[]{old2,fresh2,old1,fresh1};
+        var newSet=new HashSet<string>(StringComparer.OrdinalIgnoreCase){@"c:\NEW2",@"C:\new1"};
+        Check(LinkOrdering.NewFirst(existingOrder,newSet).SequenceEqual(new[]{fresh2,fresh1,old2,old1}),
+            "new links pinned first with both groups retaining column order");
+        Check(LinkOrdering.NewFirst(existingOrder,new HashSet<string>()).SequenceEqual(existingOrder),
+            "no new links preserves original sorting");
+        Check(LinkOrdering.NewFirst(new[]{fresh2,fresh1},newSet).SequenceEqual(new[]{fresh2,fresh1}),
+            "all-new list preserves sorting without a divider");
+    }
+    static void PersistenceTest()
+    {
+        string directory=Path.Combine(Path.GetTempPath(),"LinkShelf_PersistTest_"+Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        try
+        {
+            var store=new PersistentStore(directory);
+            Check(store.CreatedUtc==null && store.PreviousLinks("instance A")==null,"first launch has no size cache or link baseline");
+            var measured=new SizeResult(1048576,12,0,2,true,"正常 · 跳过内部链接","",@"D:\real");
+            Check(store.SetSize(@"D:\cache",measured),"local size cache accepted");
+            Check(!store.SetSize(@"\\nas\share",measured),"network size remains session-only");
+            store.SaveSizes();
+            var created=store.CreatedUtc;
+            store.SaveLinks("instance A",new[]{@"C:\A",@"c:\a",@"C:\B"});
+            store.SaveLinks("instance B",new[]{@"D:\other"});
+            var reloaded=new PersistentStore(directory);
+            Check(reloaded.Sizes.TryGetValue(@"d:\CACHE",out var saved) && saved==measured &&
+                  !reloaded.Sizes.ContainsKey(@"\\nas\share") && reloaded.CreatedUtc==created,
+                  "restart restores persistent size and creation timestamp");
+            Check(reloaded.PreviousLinks("INSTANCE a") is { Count:2 } links && links.Contains(@"C:\a") &&
+                  reloaded.PreviousLinks("instance B") is { Count:1 },"instance snapshots isolated and deduplicated");
+            Check(PersistentStore.NewlyDiscovered(new[]{@"C:\A",@"C:\new",@"c:\NEW"},reloaded.PreviousLinks("instance A"))
+                  .SetEquals(new[]{@"C:\new"}),"new links highlighted by path only");
+            Check(PersistentStore.NewlyDiscovered(new[]{@"C:\existing"},null).Count==0,
+                  "first launch never marks all links new");
+            reloaded.SaveLinks("instance A",Array.Empty<string>());
+            Check(new PersistentStore(directory).PreviousLinks("instance A") is { Count:2 },
+                  "unexpected empty scan preserves nonempty baseline");
+            var fresh=new PersistentStore(directory);
+            fresh.SaveLinks("instance C",Array.Empty<string>());
+            Check(new PersistentStore(directory).PreviousLinks("instance C") is { Count:0 },
+                  "first empty scan creates real baseline");
+            File.WriteAllText(Path.Combine(directory,"LinkShelf.links.json"),"{broken");
+            var broken=new PersistentStore(directory);
+            Check(broken.SnapshotLoadFailed && broken.PreviousLinks("instance A")==null &&
+                  broken.Sizes.ContainsKey(@"D:\cache"),"bad snapshot cannot erase size cache");
+            File.WriteAllText(Path.Combine(directory,"LinkShelf.sizes.json"),"{broken");
+            var brokenSize=new PersistentStore(directory);
+            Check(brokenSize.SizeLoadFailed && brokenSize.Sizes.Count==0,"bad size cache ignored safely");
+        }
+        finally { if(Directory.Exists(directory))Directory.Delete(directory,true); }
     }
     static void NativeTest()
     {

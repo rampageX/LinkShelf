@@ -61,6 +61,104 @@ public sealed class DarkFlowLayoutPanel : FlowLayoutPanel
     public DarkFlowLayoutPanel() => SetStyle(ControlStyles.OptimizedDoubleBuffer |
         ControlStyles.AllPaintingInWmPaint, true);
 }
+public sealed class DarkPanel : Panel
+{
+    public DarkPanel() => SetStyle(ControlStyles.OptimizedDoubleBuffer |
+        ControlStyles.AllPaintingInWmPaint, true);
+}
+// Label.AutoEllipsis invokes a native, light-colored tooltip on some themes.
+// Draw the ellipsis ourselves so the matching dark tooltip is the only popup.
+public sealed class DarkEllipsisLabel : Label
+{
+    public DarkEllipsisLabel() => SetStyle(ControlStyles.UserPaint |
+        ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint, true);
+
+    protected override void OnPaint(PaintEventArgs e)
+    {
+        e.Graphics.Clear(BackColor);
+        TextRenderer.DrawText(e.Graphics, Text, Font, ClientRectangle, ForeColor,
+            TextFormatFlags.Left | TextFormatFlags.VerticalCenter |
+            TextFormatFlags.EndEllipsis | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix);
+    }
+}
+
+// DataGridView's built-in CellToolTipText always uses the Windows tooltip
+// palette. Own one tooltip per window instead of creating one for each cell.
+public sealed class DarkToolTip : IDisposable
+{
+    readonly ToolTip tip = new()
+    {
+        OwnerDraw = true, IsBalloon = false, ShowAlways = true,
+        UseAnimation = false, UseFading = false,
+        BackColor = Dark.Raised, ForeColor = Dark.Text
+    };
+    readonly System.Windows.Forms.Timer delay = new() { Interval = 550 };
+    Control? owner;
+    string message = "";
+
+    const TextFormatFlags Flags = TextFormatFlags.Left | TextFormatFlags.Top |
+        TextFormatFlags.WordBreak | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding;
+
+    public DarkToolTip()
+    {
+        delay.Tick += (_,_) => ShowPending();
+        tip.Popup += (_,e) => e.ToolTipSize = Measure(e.AssociatedControl?.Font ?? Control.DefaultFont);
+        tip.Draw += (_,e) =>
+        {
+            e.Graphics.Clear(Dark.Raised);
+            using var border = new Pen(Color.FromArgb(92,100,112));
+            e.Graphics.DrawRectangle(border, 0, 0, e.Bounds.Width - 1, e.Bounds.Height - 1);
+            var content = Rectangle.Inflate(e.Bounds, -8, -6);
+            TextRenderer.DrawText(e.Graphics, e.ToolTipText, e.AssociatedControl?.Font ?? Control.DefaultFont,
+                content, Dark.Text, Flags);
+        };
+    }
+
+    Size Measure(Font font)
+    {
+        var work = Screen.FromPoint(Cursor.Position).WorkingArea;
+        int maxWidth = Math.Max(160, Math.Min((int)Math.Ceiling(840 * (font.SizeInPoints / 9f)), work.Width - 48));
+        Size text = TextRenderer.MeasureText(message, font, new Size(maxWidth, work.Height), Flags);
+        return new Size(Math.Min(work.Width - 24, text.Width + 16), Math.Min(work.Height - 24, text.Height + 12));
+    }
+
+    public void Schedule(Control target, string text)
+    {
+        Hide();
+        if (string.IsNullOrEmpty(text)) return;
+        owner = target;
+        message = text;
+        delay.Start();
+    }
+
+    void ShowPending()
+    {
+        delay.Stop();
+        if (owner == null || owner.IsDisposed || !owner.IsHandleCreated ||
+            !owner.ClientRectangle.Contains(owner.PointToClient(Cursor.Position))) return;
+
+        Point cursor = Cursor.Position;
+        Rectangle work = Screen.FromPoint(cursor).WorkingArea;
+        Size size = Measure(owner.Font);
+        int x = cursor.X + 16, y = cursor.Y + 22;
+        if (x + size.Width > work.Right) x = cursor.X - size.Width - 12;
+        if (y + size.Height > work.Bottom) y = cursor.Y - size.Height - 12;
+        x = Math.Clamp(x, work.Left, Math.Max(work.Left, work.Right - size.Width));
+        y = Math.Clamp(y, work.Top, Math.Max(work.Top, work.Bottom - size.Height));
+        Point local = owner.PointToClient(new Point(x,y));
+        tip.Show(message, owner, local.X, local.Y, 12000);
+    }
+
+    public void Hide()
+    {
+        delay.Stop();
+        if (owner is { IsDisposed: false }) tip.Hide(owner);
+        owner = null;
+        message = "";
+    }
+
+    public void Dispose() { Hide(); delay.Dispose(); tip.Dispose(); }
+}
 // WinForms native disabled-button text becomes nearly black on dark backgrounds.
 // Owner-paint every application button so its disabled label remains readable.
 public sealed class DarkButton : Button

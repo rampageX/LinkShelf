@@ -45,7 +45,7 @@ jobs:
             Copy-Item -LiteralPath (Join-Path 'dist-tests' $file) -Destination $tests
           }
           Copy-Item -LiteralPath 'Tests/Run_Tests.cmd' -Destination $tests
-          Copy-Item -LiteralPath 'README.txt','LICENSE','CHANGELOG.md','THIRD_PARTY_NOTICES.md' -Destination $stage
+          Copy-Item -LiteralPath 'README.txt','README.md','README.en.md','LICENSE','CHANGELOG.md','RELEASE_NOTES.md','THIRD_PARTY_NOTICES.md' -Destination $stage
           $sourceRoot = (Resolve-Path 'Source').Path
           Get-ChildItem -LiteralPath 'Source' -Recurse -File |
             Where-Object { $_.FullName -notmatch '[\\/](bin|obj)[\\/]' } |
@@ -67,7 +67,9 @@ jobs:
 
   release:
     name: Publish GitHub Release
-    if: startsWith(github.ref, 'refs/tags/v')
+    # An explicit release commit on master can publish without manually
+    # pushing a tag. Regular pushes still only build; tag pushes still work.
+    if: startsWith(github.ref, 'refs/tags/v') || (github.ref == 'refs/heads/master' && startsWith(github.event.head_commit.message, 'Release LinkShelf v'))
     needs: build
     runs-on: ubuntu-latest
     permissions:
@@ -81,6 +83,7 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
           shopt -s nullglob
           files=(LinkShelf_*.zip)
@@ -88,8 +91,19 @@ jobs:
             echo "Expected exactly one LinkShelf ZIP" >&2
             exit 1
           fi
-          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            gh release upload "$GITHUB_REF_NAME" "${files[0]}" --clobber
+          if [[ "$GITHUB_REF_TYPE" == 'tag' ]]; then
+            release_tag="$GITHUB_REF_NAME"
+          elif [[ "$GITHUB_REF" == 'refs/heads/master' && "$RELEASE_MESSAGE" =~ ^Release[[:space:]]LinkShelf[[:space:]](v[0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            release_tag="${BASH_REMATCH[1]}"
+            archive="LinkShelf_${release_tag}_Windows_x64.zip"
+            mv -- "${files[0]}" "$archive"
+            files=("$archive")
           else
-            gh release create "$GITHUB_REF_NAME" "${files[0]}" --title "LinkShelf $GITHUB_REF_NAME" --notes-file RELEASE_NOTES.md
+            echo "Invalid release trigger" >&2
+            exit 1
+          fi
+          if gh release view "$release_tag" >/dev/null 2>&1; then
+            gh release upload "$release_tag" "${files[0]}" --clobber
+          else
+            gh release create "$release_tag" "${files[0]}" --target "$GITHUB_SHA" --title "LinkShelf $release_tag" --notes-file RELEASE_NOTES.md
           fi
