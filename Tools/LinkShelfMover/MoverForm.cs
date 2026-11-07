@@ -29,7 +29,7 @@ public sealed class MoverForm : Form
     public MoverForm(string source, string destination = "", uint initialLinkTag = Reparse.Mount)
     {
         SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint, true);
-        Text = "LinkShelf Mover · 移动目录并创建链接 · 1.0.0";
+        Text = "LinkShelf Mover · 移动目录并创建链接 · 1.0.1";
         ClientSize = new Size(920, 530);
         MinimumSize = new Size(810, 505);
         StartPosition = FormStartPosition.CenterScreen;
@@ -181,7 +181,7 @@ public sealed class MoverForm : Form
         if (Dark.Message(this, "确认迁移", $"将进行真实的跨目录迁移：\n\n" +
             $"原目录：{plan.Source}\n目标：{plan.Destination}\n链接类型：{linkName}\n\n" +
             "请先退出使用该目录的软件。\n" +
-            "程序先检查/复制/校验，再把原目录改为连接点；只有链接验证成功后才清理旧文件。\n" +
+            "程序先检查/复制/校验，再把原目录改为选定的目录链接；只有链接验证成功后才清理旧文件。\n" +
             "无法绝对保证运行中没有其他程序修改文件；请确保重要数据有独立备份。", confirm: true) != DialogResult.OK) return;
 
         busy = true;
@@ -204,7 +204,7 @@ public sealed class MoverForm : Form
             string message = $"迁移成功：{result.FileCount:N0} 个文件，{Paths.Format(result.Bytes)}。\n" +
                 $"原路径：{result.Source}\n目标：{result.Destination}\n类型：{linkName}";
             if (result.BackupLeft != null)
-                message += "\n\n注意：连接点已生效，但旧目录备份未删干净，请人工检查：\n" + result.BackupLeft;
+                message += "\n\n注意：目录链接已生效，但旧目录备份未删干净，请人工检查：\n" + result.BackupLeft;
             stateLabel.Text = result.BackupLeft == null ? "迁移完成，目录链接正常。" : "目录链接已创建；旧目录备份待清理。";
             Dark.Message(this, "迁移结果", message);
         }

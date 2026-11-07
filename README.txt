@@ -1,6 +1,6 @@
-﻿LinkShelf 1.0.0 Stable
+﻿LinkShelf 1.0.1 Stable
 
-v1.0.0：主程序 LinkShelf.exe 管理已有链接，新增 LinkShelfMover.exe 安全迁移普通 NTFS 文件夹并在原位置建立目录连接点 /J 或目录符号链接 /D（默认 /J）。两个工具同包发布。永久文件夹大小缓存、Everything 实例链接快照及新链接高亮置顶继续保留。
+v1.0.1：修复 LinkShelfMover.exe 成功迁移后日志仍停在“正在清理原目录备份”的问题。实际清理完成后会明确写入最终成功消息；清理失败则继续显示源备份路径和警告。主程序 LinkShelf.exe 与 Mover 两款工具同包发布，支持 /J、/D，永久缓存和新链接高亮置顶继续保留。
 
 运行：完整解压发布包，双击 LinkShelf.exe（管理）或 LinkShelfMover.exe（迁移）。
 EXE 图标与窗口左上角统一使用 Windows Forms 标准图标；鼠标悬停及文件属性可查看文件版本、产品版本、说明、作者标识和版权信息。
@@ -54,7 +54,7 @@ Mover 快速使用：
 验证状态：
 已通过 C# 编译和 32 项跨平台核心检查（重解析数据、Unicode、IPC边界、相同/嵌套/别名去重、缓存恢复与隔离、新链接识别及分组排序）。
 首版 23 项 Windows 原生操作检查已由用户通过，v0.1.4 界面及功能由用户在 Windows 本机验收通过。
-v1.0.0 主程序界面与新链接检测已由用户在 Windows 本机验收，Mover 的 /J 与 /D 搬迁也均由用户实际测试成功；正式发布由 GitHub Actions 在 Windows 上额外编译两个 EXE 并运行两组原生测试。
+v1.0.0 主程序界面与新链接检测已由用户在 Windows 本机验收，Mover 的 /J 与 /D 搬迁也均由用户实际测试成功；v1.0.1 修复成功时缺少日志收尾。正式发布由 GitHub Actions 在 Windows 上额外编译两个 EXE 并运行两组原生测试。
 具体运行环境与文件系统不同，使用重要目录前仍建议自行备份。
 首次测试先在 Tests 目录运行 Run_Tests.cmd、Run_Mover_Tests.cmd：只在临时测试目录操作，验证链接创建、搬迁、目标冲突与回退保护。
 测试目录会在结束时清理；测试写操作日志保存在 Tests 目录。

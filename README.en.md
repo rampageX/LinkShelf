@@ -4,7 +4,7 @@
 
 LinkShelf is a portable, dark-themed Windows folder-link toolkit with two executables: **LinkShelf.exe** manages existing links using an **already running Everything instance** over IPC (no full-disk rescan), while **LinkShelfMover.exe** migrates ordinary folders and creates links at their original locations without requiring Everything.
 
-**Current stable release: v1.0.0**. Both the manager and the new folder mover ship together. Folder-size caches persist across launches; newly discovered links are highlighted and pinned ahead of existing links.
+**Current stable release: v1.0.1**. Both the manager and folder mover ship together. This patch ensures the Mover log explicitly reports successful source-backup cleanup instead of ending on an in-progress message. Folder-size caches and newly discovered link highlights remain unchanged.
 
 ### Highlights
 
@@ -22,7 +22,7 @@ LinkShelf is a portable, dark-themed Windows folder-link toolkit with two execut
 
 Windows 10/11 x64 and [.NET 8 Desktop Runtime x64](https://dotnet.microsoft.com/download/dotnet/8.0). The manager additionally requires a running [Everything](https://www.voidtools.com/) client with an existing index; Mover does not.
 
-Download `LinkShelf_v1.0.0_Windows_x64.zip` from the [v1.0.0 Release](https://github.com/rampageX/LinkShelf/releases/tag/v1.0.0), extract the entire ZIP, and run either `LinkShelf.exe` or `LinkShelfMover.exe`.
+Download `LinkShelf_v1.0.1_Windows_x64.zip` from the [v1.0.1 Release](https://github.com/rampageX/LinkShelf/releases/tag/v1.0.1), extract the entire ZIP, and run either `LinkShelf.exe` or `LinkShelfMover.exe`.
 
 Portable state stays beside the executable: `LinkShelf.sizes.json` holds cached logical sizes and timestamps; `LinkShelf.links.json` holds link snapshots per Everything instance. No existing links are marked as new during first-run baseline creation. **连接 / 刷新** (Connect / Refresh) only refreshes the indexed link list; the **更新** (Update) text link on the second statistics line recalculates folder sizes. Cached sizes are not live measurements.
 

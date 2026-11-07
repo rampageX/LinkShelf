@@ -139,12 +139,13 @@ public static class MigrationEngine
         {
             SafeRemoveTree(plan.Backup);
             journal.SetPhase("COMPLETED");
+            report.Report(new("原目录备份已清理，迁移全部完成，目录链接正常。", false));
             return new MoveResult(plan.Source, plan.Destination, before.Bytes, before.Files.Count, null);
         }
         catch (Exception ex)
         {
             try { journal.SetPhase("COMMITTED_WITH_BACKUP"); } catch { }
-            report.Report(new("连接点已生效，但清理源目录备份未完成：" + ex.Message, false));
+            report.Report(new("目录链接已生效，但清理源目录备份未完成：" + ex.Message, false));
             return new MoveResult(plan.Source, plan.Destination, before.Bytes, before.Files.Count, plan.Backup);
         }
     }

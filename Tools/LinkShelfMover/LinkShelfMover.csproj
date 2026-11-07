@@ -11,10 +11,10 @@
     <ApplicationIcon>../../Source/Assets/LinkShelf.ico</ApplicationIcon>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <AssemblyName>LinkShelfMover</AssemblyName>
-    <Version>1.0.0</Version>
-    <FileVersion>1.0.0.0</FileVersion>
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
-    <InformationalVersion>1.0.0</InformationalVersion>
+    <Version>1.0.1</Version>
+    <FileVersion>1.0.1.0</FileVersion>
+    <AssemblyVersion>1.0.1.0</AssemblyVersion>
+    <InformationalVersion>1.0.1</InformationalVersion>
     <AssemblyTitle>LinkShelf Mover - 文件夹迁移并建立连接点</AssemblyTitle>
     <Product>LinkShelf Mover</Product>
     <Description>安全迁移目录并在原位置创建 NTFS 目录连接点或符号链接</Description>

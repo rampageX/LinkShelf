@@ -4,7 +4,7 @@
 
 LinkShelf 是一套轻量、暗色、便携的 Windows 文件夹链接工具：**LinkShelf.exe** 负责集中查看和管理链接，**LinkShelfMover.exe** 负责将普通文件夹安全迁往其他本地磁盘，并在原位置建立链接。主程序直接使用**已经运行的 Everything 实例**查询索引，不重扫所有硬盘、不创建第二套索引；Mover 独立运行，无需 Everything。
 
-**当前稳定版：v1.0.0**。首次在同一发布包内提供管理器与「移动并创建链接」工具，支持 `/J` 目录连接点、`/D` 目录符号链接；永久大小缓存和新链接置顶继续保留。
+**当前稳定版：v1.0.1**。同一发布包内提供管理器与「移动并创建链接」工具，支持 `/J` 目录连接点、`/D` 目录符号链接；永久大小缓存和新链接置顶继续保留。本版修复 Mover 迁移完成后日志仍停在“正在清理”的问题。
 
 ## 功能
 
@@ -26,7 +26,7 @@ LinkShelf 是一套轻量、暗色、便携的 Windows 文件夹链接工具：*
 
 ## 下载与运行
 
-从 [v1.0.0 Release](https://github.com/rampageX/LinkShelf/releases/tag/v1.0.0) 下载 `LinkShelf_v1.0.0_Windows_x64.zip` 并**完整解压**。运行 `LinkShelf.exe` 管理链接，或运行同目录的 `LinkShelfMover.exe` 迁移普通文件夹。
+从 [v1.0.1 Release](https://github.com/rampageX/LinkShelf/releases/tag/v1.0.1) 下载 `LinkShelf_v1.0.1_Windows_x64.zip` 并**完整解压**。运行 `LinkShelf.exe` 管理链接，或运行同目录的 `LinkShelfMover.exe` 迁移普通文件夹。
 
 要求：
 
@@ -64,7 +64,7 @@ dotnet publish Tools/LinkShelfMover/LinkShelfMover.csproj -c Release -r win-x64 
 
 ## 版本
 
-当前稳定版：**v1.0.0**。详细变更见 [CHANGELOG.md](CHANGELOG.md)。
+当前稳定版：**v1.0.1**。详细变更见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 许可证
 
