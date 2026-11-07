@@ -16,6 +16,7 @@ public sealed class MoverForm : Form
     private readonly Label stateLabel = new() { Dock = DockStyle.Fill,
         Text = "准备就绪。源目录会保留到新目标核验完成之后。", AutoSize = false };
     private readonly DarkButton sendToButton = new() { Height = 34, Width = 170 };
+    private readonly DarkButton contextButton = new() { Height = 34, Width = 170 };
     private readonly DarkButton startButton = new() { Text = "检查并开始迁移", Height = 36, Width = 150 };
     private readonly DarkButton cancelButton = new() { Text = "取消任务", Height = 36, Width = 92, Enabled = false };
     private readonly DarkButton closeButton = new() { Text = "关闭", Height = 36, Width = 85 };
@@ -29,7 +30,7 @@ public sealed class MoverForm : Form
     public MoverForm(string source, string destination = "", uint initialLinkTag = Reparse.Mount)
     {
         SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint, true);
-        Text = "LinkShelf Mover · 移动目录并创建链接 · 1.0.1";
+        Text = "LinkShelf Mover · 移动目录并创建链接 · 1.0.2";
         ClientSize = new Size(920, 530);
         MinimumSize = new Size(810, 505);
         StartPosition = FormStartPosition.CenterScreen;
@@ -78,8 +79,10 @@ public sealed class MoverForm : Form
 
         var controls = new DarkFlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight };
         sendToButton.Text = SendToInstaller.Installed ? "从‘发送到’菜单移除" : "加入‘发送到’菜单";
+        contextButton.Text = ContextMenuInstaller.Installed ? "移除一级右键菜单" : "添加一级右键菜单";
         controls.Controls.Add(sendToButton);
-        var note = new Label { Text = "只安装当前用户的快捷方式；不写注册表、不驻留后台。",
+        controls.Controls.Add(contextButton);
+        var note = new Label { Text = "一级菜单仅写 HKCU；发送到仅建快捷方式，均可卸载。",
             AutoSize = true, ForeColor = Dark.Muted, Padding = new Padding(9, 8, 0, 0) };
         controls.Controls.Add(note);
         grid.Controls.Add(controls, 0, 5); grid.SetColumnSpan(controls, 3);
@@ -112,6 +115,7 @@ public sealed class MoverForm : Form
         selectSource.Click += (_, _) => BrowseSource();
         selectTargetParent.Click += (_, _) => BrowseTarget();
         sendToButton.Click += (_, _) => ToggleSendTo();
+        contextButton.Click += (_, _) => ToggleContextMenu();
         startButton.Click += async (_, _) => await StartMoveAsync();
         cancelButton.Click += (_, _) => { running?.Cancel(); cancelButton.Enabled = false; WriteLine("正在终止复制/校验…"); };
         closeButton.Click += (_, _) => Close();
@@ -170,6 +174,20 @@ public sealed class MoverForm : Form
         catch (Exception ex) { Dark.ShowError(this, "操作菜单失败：" + ex.Message); }
     }
 
+    private void ToggleContextMenu()
+    {
+        try
+        {
+            if (ContextMenuInstaller.Installed) ContextMenuInstaller.Uninstall();
+            else ContextMenuInstaller.Install();
+            contextButton.Text = ContextMenuInstaller.Installed ? "移除一级右键菜单" : "添加一级右键菜单";
+            WriteLine(ContextMenuInstaller.Installed
+                ? "已安装当前用户的文件夹一级右键菜单。Windows 11 可能需要点击‘显示更多选项’。"
+                : "已移除当前用户的文件夹一级右键菜单。");
+        }
+        catch (Exception ex) { Dark.ShowError(this, "操作一级右键菜单失败：" + ex.Message); }
+    }
+
     private async Task StartMoveAsync()
     {
         if (busy) return;
@@ -188,7 +206,8 @@ public sealed class MoverForm : Form
         running = new CancellationTokenSource();
         startButton.Enabled = false; selectSource.Enabled = false; selectTargetParent.Enabled = false;
         sourceBox.Enabled = false; destinationBox.Enabled = false;
-        sendToButton.Enabled = false; closeButton.Enabled = false; linkTypeBox.Enabled = false;
+        sendToButton.Enabled = false; contextButton.Enabled = false;
+        closeButton.Enabled = false; linkTypeBox.Enabled = false;
         cancelButton.Enabled = true;
         logBox.Clear();
         var progress = new Progress<MoveProgress>(p =>
@@ -250,7 +269,7 @@ public sealed class MoverForm : Form
             busy = false;
             running.Dispose(); running = null;
             startButton.Enabled = selectSource.Enabled = selectTargetParent.Enabled =
-                sourceBox.Enabled = destinationBox.Enabled = sendToButton.Enabled = closeButton.Enabled =
+                sourceBox.Enabled = destinationBox.Enabled = sendToButton.Enabled = contextButton.Enabled = closeButton.Enabled =
                     linkTypeBox.Enabled = true;
             cancelButton.Enabled = false;
             if (closeAfterElevation) BeginInvoke(Close);

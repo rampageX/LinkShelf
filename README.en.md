@@ -4,7 +4,7 @@
 
 LinkShelf is a portable, dark-themed Windows folder-link toolkit with two executables: **LinkShelf.exe** manages existing links using an **already running Everything instance** over IPC (no full-disk rescan), while **LinkShelfMover.exe** migrates ordinary folders and creates links at their original locations without requiring Everything.
 
-**Current stable release: v1.0.1**. Both the manager and folder mover ship together. This patch ensures the Mover log explicitly reports successful source-backup cleanup instead of ending on an in-progress message. Folder-size caches and newly discovered link highlights remain unchanged.
+**Current stable release: v1.0.2**. Both the manager and folder mover ship together. Mover now offers an optional per-user, top-level folder context menu alongside the existing SendTo shortcut. Folder-size caches and newly discovered link highlights remain unchanged.
 
 ### Highlights
 
@@ -15,14 +15,14 @@ LinkShelf is a portable, dark-themed Windows folder-link toolkit with two execut
 - Estimate logical data offloaded from `C:` to other local drives while deduplicating identical, nested, and resolved alias targets.
 - Dark UI, remembered layout, adaptive columns, and reduced repainting.
 - Responsive single-row toolbar, dark custom tooltips, per-Everything-instance link snapshots, and a text link for refreshing cached sizes.
-- **Mover:** From Explorer, right-click a single folder and choose **Send to → LinkShelf - 移动并建立目录连接点**; select the destination parent directory, then edit the generated full path if desired. Choose a junction (`/J`, default) or directory symlink (`/D`).
-- **Mover safety:** Validates source, permissions, free space, and destination; copies and hashes data before replacing the original path with a verified link. Requests UAC elevation on access-denied errors, preserving the requested paths and type for explicit reconfirmation. No registry changes or shell extensions: the context action is a per-user SendTo shortcut.
+- **Mover:** Install either **添加一级右键菜单** (Add direct folder menu) or the existing SendTo shortcut. The direct action is **使用 LinkShelf Mover 迁移** (Move with LinkShelf Mover), shown in the classic context menu; Windows 11 may require **Show more options**. Both entries can be removed independently. Select the destination parent directory, then edit the generated full path if desired. Choose a junction (`/J`, default) or directory symlink (`/D`).
+- **Mover safety:** Validates source, permissions, free space, and destination; copies and hashes data before replacing the original path with a verified link. Requests UAC elevation on access-denied errors, preserving the requested paths and type for explicit reconfirmation. No shell extensions or services: the direct menu uses a removable static verb under the current user's registry, while SendTo uses only a shortcut.
 
 ### Requirements
 
 Windows 10/11 x64 and [.NET 8 Desktop Runtime x64](https://dotnet.microsoft.com/download/dotnet/8.0). The manager additionally requires a running [Everything](https://www.voidtools.com/) client with an existing index; Mover does not.
 
-Download `LinkShelf_v1.0.1_Windows_x64.zip` from the [v1.0.1 Release](https://github.com/rampageX/LinkShelf/releases/tag/v1.0.1), extract the entire ZIP, and run either `LinkShelf.exe` or `LinkShelfMover.exe`.
+Download `LinkShelf_v1.0.2_Windows_x64.zip` from the [v1.0.2 Release](https://github.com/rampageX/LinkShelf/releases/tag/v1.0.2), extract the entire ZIP, and run either `LinkShelf.exe` or `LinkShelfMover.exe`.
 
 Portable state stays beside the executable: `LinkShelf.sizes.json` holds cached logical sizes and timestamps; `LinkShelf.links.json` holds link snapshots per Everything instance. No existing links are marked as new during first-run baseline creation. **连接 / 刷新** (Connect / Refresh) only refreshes the indexed link list; the **更新** (Update) text link on the second statistics line recalculates folder sizes. Cached sizes are not live measurements.
 

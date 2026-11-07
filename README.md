@@ -4,7 +4,7 @@
 
 LinkShelf 是一套轻量、暗色、便携的 Windows 文件夹链接工具：**LinkShelf.exe** 负责集中查看和管理链接，**LinkShelfMover.exe** 负责将普通文件夹安全迁往其他本地磁盘，并在原位置建立链接。主程序直接使用**已经运行的 Everything 实例**查询索引，不重扫所有硬盘、不创建第二套索引；Mover 独立运行，无需 Everything。
 
-**当前稳定版：v1.0.1**。同一发布包内提供管理器与「移动并创建链接」工具，支持 `/J` 目录连接点、`/D` 目录符号链接；永久大小缓存和新链接置顶继续保留。本版修复 Mover 迁移完成后日志仍停在“正在清理”的问题。
+**当前稳定版：v1.0.2**。同一发布包内提供管理器与「移动并创建链接」工具，支持 `/J` 目录连接点、`/D` 目录符号链接；永久大小缓存和新链接置顶继续保留。Mover 新增可独立安装/移除的一级文件夹右键菜单。
 
 ## 功能
 
@@ -19,14 +19,16 @@ LinkShelf 是一套轻量、暗色、便携的 Windows 文件夹链接工具：*
 
 ### LinkShelf Mover：右键一键搬家
 
-- 运行 `LinkShelfMover.exe`，点击“加入「发送到」菜单”，即可在资源管理器对**单个普通文件夹**右键 → **发送到 → LinkShelf - 移动并建立目录连接点**。仅创建当前用户的快捷方式；不注册 Shell 扩展、不修改注册表。
+- 运行 `LinkShelfMover.exe`，可选择 **添加一级右键菜单**（推荐）或 **加入「发送到」菜单**。两者独立安装、独立移除，均仅限当前 Windows 用户；不安装 Shell 扩展 DLL、不驻留后台。
+- 一级菜单使用当前用户的注册表静态命令，可直接在经典右键菜单选择 **使用 LinkShelf Mover 迁移**；Windows 11 可能需要点击“显示更多选项”。「发送到」则只创建用户级快捷方式、不写注册表。
+- WizTree 的「发送到」若额外弹出资源管理器，可以尝试一级菜单入口；此兼容性差异仍需 Windows 本机测试确认。
 - 例如右键 `C:\A`，在界面中选择目的地父目录 `D:\B`，自动生成可编辑的完整目标路径 `D:\B\A`。
 - 选择**目录连接点 `/J`（默认）**或**目录符号链接 `/D`**，预检通过后先复制、核验，再切换原目录为链接；遇到访问被拒绝可提示 UAC 提权重新打开，保留已填路径及链接类型，**不会未经确认自动执行**。
 - 支持进度与取消、迁移日志、异常恢复提示，记忆窗口位置。详情请读 [Mover 使用说明](Tools/LinkShelfMover/README.md)。
 
 ## 下载与运行
 
-从 [v1.0.1 Release](https://github.com/rampageX/LinkShelf/releases/tag/v1.0.1) 下载 `LinkShelf_v1.0.1_Windows_x64.zip` 并**完整解压**。运行 `LinkShelf.exe` 管理链接，或运行同目录的 `LinkShelfMover.exe` 迁移普通文件夹。
+从 [v1.0.2 Release](https://github.com/rampageX/LinkShelf/releases/tag/v1.0.2) 下载 `LinkShelf_v1.0.2_Windows_x64.zip` 并**完整解压**。运行 `LinkShelf.exe` 管理链接，或运行同目录的 `LinkShelfMover.exe` 迁移普通文件夹。
 
 要求：
 
@@ -64,7 +66,7 @@ dotnet publish Tools/LinkShelfMover/LinkShelfMover.csproj -c Release -r win-x64 
 
 ## 版本
 
-当前稳定版：**v1.0.1**。详细变更见 [CHANGELOG.md](CHANGELOG.md)。
+当前稳定版：**v1.0.2**。详细变更见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 许可证
 

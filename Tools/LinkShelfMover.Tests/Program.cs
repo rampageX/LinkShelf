@@ -1,6 +1,7 @@
 using LinkShelf.Core;
 using LinkShelf.Mover;
 using System.ComponentModel;
+using Microsoft.Win32;
 
 string scratch = Path.Combine(Path.GetTempPath(), "LinkShelfMover_native_tests_" + Guid.NewGuid().ToString("N"));
 Directory.CreateDirectory(scratch);
@@ -103,6 +104,38 @@ try
     {
         Assert(Directory.Exists(src7) && !Directory.Exists(dest7),
             "symlink privilege denied; original folder safely restored");
+    }
+
+    // Registry tests use a unique, temporary HKCU key, never the user's actual
+    // Directory\shell entry. The menu installer does not require elevation.
+    string testVerbKey = @"Software\LinkShelfMover.VerbTest." + Guid.NewGuid().ToString("N");
+    try
+    {
+        string fakeExe = @"D:\Program Files\LinkShelf\LinkShelfMover.exe";
+        ContextMenuInstaller.InstallAt(testVerbKey, fakeExe);
+        using (RegistryKey? key = Registry.CurrentUser.OpenSubKey(testVerbKey))
+        using (RegistryKey? command = key?.OpenSubKey("command"))
+            Assert(ContextMenuInstaller.IsInstalledAt(testVerbKey) &&
+                   (string?)command?.GetValue(null) == "\"" + fakeExe + "\" \"%1\"",
+                   "per-user folder menu registers a quoted single-folder command");
+
+        ContextMenuInstaller.UninstallAt(testVerbKey);
+        Assert(Registry.CurrentUser.OpenSubKey(testVerbKey) == null,
+            "folder menu uninstall removes only its own registry key");
+
+        using (RegistryKey alien = Registry.CurrentUser.CreateSubKey(testVerbKey)!)
+            alien.SetValue("LinkShelfOwner", "unrelated-user-key");
+        bool foreignProtected = false;
+        try { ContextMenuInstaller.UninstallAt(testVerbKey); }
+        catch (IOException) { foreignProtected = true; }
+        using (RegistryKey? alienStillExists = Registry.CurrentUser.OpenSubKey(testVerbKey))
+            Assert(foreignProtected && alienStillExists != null,
+                "folder menu refuses to delete a foreign registry key");
+    }
+    finally
+    {
+        // Exact, unique test key only. Never recurse over Software or shell.
+        Registry.CurrentUser.DeleteSubKeyTree(testVerbKey, throwOnMissingSubKey: false);
     }
 
     Console.WriteLine($"ALL {passed} NATIVE TESTS PASSED");
