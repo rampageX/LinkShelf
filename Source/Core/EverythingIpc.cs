@@ -3,7 +3,7 @@ using System.Text;
 namespace LinkShelf.Core;
 public sealed record EverythingInstance(IntPtr Handle, string ClassName)
 {
-    public override string ToString() => ClassName == "EVERYTHING_TASKBAR_NOTIFICATION" ? "默认实例" : ClassName.Replace("EVERYTHING_TASKBAR_NOTIFICATION", "实例 ").Trim();
+    public override string ToString() => ClassName == "EVERYTHING_TASKBAR_NOTIFICATION" ? L.T("默认实例") : ClassName.Replace("EVERYTHING_TASKBAR_NOTIFICATION", L.T("实例 ")).Trim();
 }
 public static class EverythingIpc
 {
@@ -39,22 +39,22 @@ public static class EverythingIpc
             Marshal.Copy(packet, 0, p, packet.Length);
             var cds = new CopyData { Id = new IntPtr(2), Length = packet.Length, Data = p };
             if (SendMessageTimeoutW(instance.Handle, 0x4A, replyWindow, ref cds, 2, 5000, out var accepted) == IntPtr.Zero || accepted == IntPtr.Zero)
-                throw new IOException("Everything 未接受查询。请确认客户端正在运行，且两边使用相同的权限级别。");
+                throw new IOException(L.T("Everything 未接受查询。请确认客户端正在运行，且两边使用相同的权限级别。"));
         }
         finally { Marshal.FreeHGlobal(p); }
     }
     public static List<string> Parse(byte[] data)
     {
-        if (data.Length < 28) throw new IOException("Everything 返回数据不完整。");
+        if (data.Length < 28) throw new IOException(L.T("Everything 返回数据不完整。"));
         uint total = BitConverter.ToUInt32(data, 8), count = BitConverter.ToUInt32(data, 20);
-        if (count > 100000 || 28L + count * 12L > data.Length) throw new IOException("Everything 返回数据无效。");
-        if (total > count) throw new IOException("候选目录超过十万项，本次结果不完整；请缩小 Everything 索引范围后重试。");
+        if (count > 100000 || 28L + count * 12L > data.Length) throw new IOException(L.T("Everything 返回数据无效。"));
+        if (total > count) throw new IOException(L.T("候选目录超过十万项，本次结果不完整；请缩小 Everything 索引范围后重试。"));
         string GetString(uint offset)
         {
-            if ((offset & 1) != 0 || offset >= data.Length) throw new IOException("Everything 字符串偏移无效。");
+            if ((offset & 1) != 0 || offset >= data.Length) throw new IOException(L.T("Everything 字符串偏移无效。"));
             int end = (int)offset;
             while (end + 1 < data.Length && (data[end] != 0 || data[end + 1] != 0)) end += 2;
-            if (end + 1 >= data.Length) throw new IOException("Everything 字符串未终止。");
+            if (end + 1 >= data.Length) throw new IOException(L.T("Everything 字符串未终止。"));
             return Encoding.Unicode.GetString(data, (int)offset, end - (int)offset);
         }
         var paths = new List<string>();

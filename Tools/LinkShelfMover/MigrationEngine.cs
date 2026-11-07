@@ -36,8 +36,8 @@ public static class MigrationEngine
         IProgress<MoveProgress> report, CancellationToken token, uint linkTag)
     {
         if (linkTag is not (Reparse.Mount or Reparse.Symlink))
-            throw new ArgumentOutOfRangeException(nameof(linkTag), "只能建立目录连接点 /J 或目录符号链接 /D。");
-        report.Report(new("检查路径、目录权限和文件占用…"));
+            throw new ArgumentOutOfRangeException(nameof(linkTag), L.T("只能建立目录连接点 /J 或目录符号链接 /D。"));
+        report.Report(new(L.T("检查路径、目录权限和文件占用…")));
         MovePlan plan = PathRules.MakePlan(source, destination);
         token.ThrowIfCancellationRequested();
         PathRules.CheckSourceRenamePermission(plan.Source);
@@ -47,9 +47,9 @@ public static class MigrationEngine
         Inventory before = InventoryOf(plan.Source, report, token, checkFileLocks: true);
         long free = new DriveInfo(Path.GetPathRoot(plan.Destination)!).AvailableFreeSpace;
         if (before.Bytes > free - 64L * 1024 * 1024)
-            throw new IOException($"目标盘剩余空间不足：数据 {Paths.Format(before.Bytes)}，可用 {Paths.Format(free)}，还需预留 64 MiB。");
+            throw new IOException(L.T("目标盘剩余空间不足：数据 {0}，可用 {1}，还需预留 64 MiB。", Paths.Format(before.Bytes), Paths.Format(free)));
         if (File.Exists(plan.Destination) || Directory.Exists(plan.Destination))
-            throw new IOException("检查期间目标路径被其他程序占用，请重新选择。");
+            throw new IOException(L.T("检查期间目标路径被其他程序占用，请重新选择。"));
 
         token.ThrowIfCancellationRequested();
         Reparse.JournalPathOverride = MoveJournal.OperationLogPath;
@@ -57,12 +57,12 @@ public static class MigrationEngine
         bool movedSource = false, movedStage = false, madeJunction = false;
         try
         {
-            report.Report(new($"预检通过：{before.Files.Count:N0} 个文件，{before.Directories.Count:N0} 个目录，{Paths.Format(before.Bytes)}。正在复制…"));
+            report.Report(new(L.T("预检通过：{0:N0} 个文件，{1:N0} 个目录，{2}。正在复制…",before.Files.Count,before.Directories.Count,Paths.Format(before.Bytes))));
             journal.SetPhase("COPYING");
             Directory.CreateDirectory(plan.Stage);
             Robocopy(plan, token).GetAwaiter().GetResult();
 
-            report.Report(new("复制完成，正在核对目录及数据内容（SHA-256）…"));
+            report.Report(new(L.T("复制完成，正在核对目录及数据内容（SHA-256）…")));
             Inventory staged = InventoryOf(plan.Stage, report, token, checkFileLocks: false);
             CompareInventory(before, staged);
             foreach (var (entry, idx) in before.Files.Select((entry, idx) => (entry, idx)))
@@ -73,9 +73,9 @@ public static class MigrationEngine
                 using var s = new FileStream(left, FileMode.Open, FileAccess.Read, FileShare.Read);
                 using var d = new FileStream(right, FileMode.Open, FileAccess.Read, FileShare.Read);
                 if (!SHA256.HashData(s).AsSpan().SequenceEqual(SHA256.HashData(d)))
-                    throw new IOException("复制后校验失败，源数据未移动：" + entry.Relative);
+                    throw new IOException(L.T("复制后校验失败，源数据未移动：") + entry.Relative);
                 if (idx % 100 == 0)
-                    report.Report(new($"已校验 {idx + 1:N0}/{before.Files.Count:N0} 个文件…"));
+                    report.Report(new(L.T("已校验 {0:N0}/{1:N0} 个文件…",idx+1,before.Files.Count)));
             }
             // Check for mutations during transfer and avoid replacing a changed source.
             CompareInventory(before, InventoryOf(plan.Source, report, token, checkFileLocks: true));
@@ -84,11 +84,11 @@ public static class MigrationEngine
 
             // From this point cancellation is disabled. These three namespace
             // operations are reversible, but cannot be made atomic cross-volume.
-            report.Report(new("校验通过，正在切换目录（此阶段不可取消）…", false));
+            report.Report(new(L.T("校验通过，正在切换目录（此阶段不可取消）…"), false));
             journal.SetPhase("COMMITTING");
             if (Directory.Exists(plan.Destination) || File.Exists(plan.Destination) ||
                 Directory.Exists(plan.Backup) || Directory.Exists(plan.Stage) == false)
-                throw new IOException("提交前路径发生变化，未移动源目录。");
+                throw new IOException(L.T("提交前路径发生变化，未移动源目录。"));
             Directory.Move(plan.Source, plan.Backup);
             movedSource = true;
             journal.SetPhase("SOURCE_BACKED_UP");
@@ -100,7 +100,7 @@ public static class MigrationEngine
             LinkRow actual = Reparse.Read(plan.Source);
             if (actual.Tag != linkTag ||
                 !Path.GetFullPath(actual.Target).Equals(plan.Destination, StringComparison.OrdinalIgnoreCase))
-                throw new IOException("新链接核验失败，准备恢复旧目录。");
+                throw new IOException(L.T("新链接核验失败，准备恢复旧目录。"));
             journal.SetPhase("LINK_CREATED");
         }
         catch (Exception failure)
@@ -113,7 +113,7 @@ public static class MigrationEngine
                     {
                         LinkRow link = Reparse.Read(plan.Source);
                         if (!Path.GetFullPath(link.Target).Equals(plan.Destination, StringComparison.OrdinalIgnoreCase))
-                            throw new IOException("链接指向发生变化，不自动删除。");
+                            throw new IOException(L.T("链接指向发生变化，不自动删除。"));
                         Reparse.Delete(link); // native no-follow deletion, never touches target
                     }
                     if (movedStage) Directory.Move(plan.Destination, plan.Stage);
@@ -123,29 +123,28 @@ public static class MigrationEngine
                 catch (Exception rollback)
                 {
                     try { journal.SetPhase("RECOVERY_REQUIRED"); } catch { /* keep original error */ }
-                    throw new IOException("迁移未完成，自动恢复也失败！请勿手动删除临时目录。\n" +
-                        $"原路径：{plan.Source}\n保留的源备份：{plan.Backup}\n目标：{plan.Destination}\n" +
-                        "请先检查以上路径，必要时将源备份改名还原。恢复错误：" + rollback.Message, failure);
+                    throw new IOException(L.T("迁移未完成，自动恢复也失败！请勿手动删除临时目录。\n原路径：{0}\n保留的源备份：{1}\n目标：{2}\n请先检查以上路径，必要时将源备份改名还原。恢复错误：{3}",
+                        plan.Source,plan.Backup,plan.Destination,rollback.Message), failure);
                 }
             }
             else { try { journal.SetPhase(token.IsCancellationRequested ? "CANCELLED" : "ROLLED_BACK"); } catch { } }
             try { SafeRemoveTree(plan.Stage); }
-            catch (Exception cleanup) { report.Report(new("未能清理部分暂存数据，请人工检查：" + plan.Stage + "。" + cleanup.Message, false)); }
+            catch (Exception cleanup) { report.Report(new(L.T("未能清理部分暂存数据，请人工检查：{0}。{1}",plan.Stage,cleanup.Message), false)); }
             throw;
         }
 
-        report.Report(new("目录链接已建立，正在清理原目录备份以释放源盘空间…", false));
+        report.Report(new(L.T("目录链接已建立，正在清理原目录备份以释放源盘空间…"), false));
         try
         {
             SafeRemoveTree(plan.Backup);
             journal.SetPhase("COMPLETED");
-            report.Report(new("原目录备份已清理，迁移全部完成，目录链接正常。", false));
+            report.Report(new(L.T("原目录备份已清理，迁移全部完成，目录链接正常。"), false));
             return new MoveResult(plan.Source, plan.Destination, before.Bytes, before.Files.Count, null);
         }
         catch (Exception ex)
         {
             try { journal.SetPhase("COMMITTED_WITH_BACKUP"); } catch { }
-            report.Report(new("目录链接已生效，但清理源目录备份未完成：" + ex.Message, false));
+            report.Report(new(L.T("目录链接已生效，但清理源目录备份未完成：") + ex.Message, false));
             return new MoveResult(plan.Source, plan.Destination, before.Bytes, before.Files.Count, plan.Backup);
         }
     }
@@ -166,11 +165,11 @@ public static class MigrationEngine
             {
                 FileAttributes attr = File.GetAttributes(entry);
                 if ((attr & FileAttributes.ReparsePoint) != 0)
-                    throw new IOException("存在内部链接或其他重解析点，避免递归/误迁移，已停止：" + entry);
+                    throw new IOException(L.T("存在内部链接或其他重解析点，避免递归/误迁移，已停止：") + entry);
                 if ((attr & FileAttributes.Encrypted) != 0)
-                    throw new IOException("存在 EFS 加密项目，迁移可能破坏加密关系，已停止：" + entry);
+                    throw new IOException(L.T("存在 EFS 加密项目，迁移可能破坏加密关系，已停止：") + entry);
                 if ((attr & FileAttributes.ReadOnly) != 0 && (attr & FileAttributes.Directory) == 0)
-                    throw new IOException("存在只读文件，迁移后可能无法清理旧目录，请先确认：" + entry);
+                    throw new IOException(L.T("存在只读文件，迁移后可能无法清理旧目录，请先确认：") + entry);
                 string relative = Path.GetRelativePath(root, entry);
                 if ((attr & FileAttributes.Directory) != 0)
                 {
@@ -190,15 +189,15 @@ public static class MigrationEngine
                             if (!GetFileInformationByHandle(s.SafeFileHandle, out FileIdInfo identity))
                                 throw new Win32Exception(Marshal.GetLastWin32Error());
                             if (identity.Links > 1)
-                                throw new IOException("文件存在硬链接，跨盘复制无法保持硬链接关系：" + entry);
+                                throw new IOException(L.T("文件存在硬链接，跨盘复制无法保持硬链接关系：") + entry);
                         }
                         catch (IOException) { throw; }
-                        catch (Exception ex) { throw new IOException("文件无法读取或被其他程序占用：" + entry, ex); }
+                        catch (Exception ex) { throw new IOException(L.T("文件无法读取或被其他程序占用：") + entry, ex); }
                     }
                     files.Add(new FileEntry(relative, info.Length, info.LastWriteTimeUtc));
                     bytes = checked(bytes + info.Length);
                     if (files.Count % 1000 == 0)
-                        report.Report(new($"正在检查：{files.Count:N0} 个文件，{Paths.Format(bytes)}…"));
+                        report.Report(new(L.T("正在检查：{0:N0} 个文件，{1}…",files.Count,Paths.Format(bytes))));
                 }
             }
         }
@@ -210,13 +209,13 @@ public static class MigrationEngine
     {
         if (source.Files.Count != target.Files.Count || source.Directories.Count != target.Directories.Count ||
             !source.Directories.SetEquals(target.Directories))
-            throw new IOException("复制期间文件/目录数量发生变化，操作已停止。");
+            throw new IOException(L.T("复制期间文件/目录数量发生变化，操作已停止。"));
         for (int i = 0; i < source.Files.Count; i++)
         {
             FileEntry a = source.Files[i], b = target.Files[i];
             if (!a.Relative.Equals(b.Relative, StringComparison.OrdinalIgnoreCase) ||
                 a.Length != b.Length || a.LastWriteUtc != b.LastWriteUtc)
-                throw new IOException("文件列表或大小/时间发生变化，操作已停止：" + a.Relative);
+                throw new IOException(L.T("文件列表或大小/时间发生变化，操作已停止：") + a.Relative);
         }
     }
 
@@ -239,7 +238,7 @@ public static class MigrationEngine
             "/UNILOG:" + logPath })
             psi.ArgumentList.Add(arg);
         using var proc = new Process { StartInfo = psi };
-        if (!proc.Start()) throw new IOException("无法启动 Windows Robocopy。");
+        if (!proc.Start()) throw new IOException(L.T("无法启动 Windows Robocopy。"));
         Task<string> stdout = proc.StandardOutput.ReadToEndAsync();
         Task<string> stderr = proc.StandardError.ReadToEndAsync();
         try { await proc.WaitForExitAsync(token); }
@@ -260,14 +259,14 @@ public static class MigrationEngine
             if (denied != null)
             {
                 string? affected = Regex.Match(denied, @"[A-Za-z]:\\[^\r\n]*").Value.Trim();
-                throw new MovePermissionException("复制时 Windows 拒绝访问（错误 5）。\n" +
-                    (string.IsNullOrEmpty(affected) ? "" : "涉及目录：" + affected + "\n") +
-                    "可能是源目录受到保护，也可能是复制 NTFS 权限时缺少权限。\n" +
-                    "请先退出相关软件；可以选择以管理员身份重新检查并迁移。\n" +
-                    "原目录未被移动。\n详细日志：" + logPath);
+                throw new MovePermissionException(L.T("复制时 Windows 拒绝访问（错误 5）。\n") +
+                    (string.IsNullOrEmpty(affected) ? "" : L.T("涉及目录：") + affected + "\n") +
+                    L.T("可能是源目录受到保护，也可能是复制 NTFS 权限时缺少权限。\n") +
+                    L.T("请先退出相关软件；可以选择以管理员身份重新检查并迁移。\n") +
+                    L.T("原目录未被移动。\n详细日志：") + logPath);
             }
-            throw new IOException($"复制失败（Robocopy 退出码 {proc.ExitCode}），原目录未移动。\n" +
-                (details.Length > 650 ? details[^650..] : details) + "\n详细日志：" + logPath);
+            throw new IOException(L.T("复制失败（Robocopy 退出码 {0}），原目录未移动。\n",proc.ExitCode) +
+                (details.Length > 650 ? details[^650..] : details) + L.T("\n详细日志：") + logPath);
         }
     }
 
@@ -275,12 +274,12 @@ public static class MigrationEngine
     {
         if (!Directory.Exists(path)) return;
         if ((File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0)
-            throw new IOException("待清理目录变成重解析点，拒绝删除：" + path);
+            throw new IOException(L.T("待清理目录变成重解析点，拒绝删除：") + path);
         foreach (string entry in Directory.EnumerateFileSystemEntries(path))
         {
             FileAttributes attr = File.GetAttributes(entry);
             if ((attr & FileAttributes.ReparsePoint) != 0)
-                throw new IOException("待清理目录中出现重解析点，拒绝自动删除：" + entry);
+                throw new IOException(L.T("待清理目录中出现重解析点，拒绝自动删除：") + entry);
             if ((attr & FileAttributes.Directory) != 0) SafeRemoveTree(entry);
             else File.Delete(entry);
         }

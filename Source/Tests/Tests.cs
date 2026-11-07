@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.Json;
 using LinkShelf.Core;
 static class Tests
 {
@@ -13,6 +14,17 @@ static class Tests
     {
         try
         {
+            Check(L.ForCulture("zh-CN","取消")=="取消" && L.ForCulture("zh-TW","取消")=="取消",
+                "Chinese UI language and regional Chinese fallback");
+            Check(L.ForCulture("en-US","取消")=="Cancel" && L.ForCulture("de-DE","取消")=="Cancel",
+                "English UI language and non-Chinese fallback");
+            Check(L.ForCulture("en-US","迁移成功：{0:N0} 个文件，{1}。\n原路径：{2}\n目标：{3}\n类型：{4}",
+                  2,"1 MiB",@"C:\source",@"D:\target","Junction /J").Contains("Migration succeeded: 2 files"),
+                "English migration result formatting");
+            Check(L.ForCulture("en-US","目标不存在")=="Target missing" &&
+                  Paths.IsMissingTarget(new LinkRow{Path=@"C:\missing",Target=@"D:\missing",
+                    Size=new SizeResult(0,0,1,0,false,"目标不存在")}),
+                "localized display preserves invariant cached status");
             var junction=Reparse.Parse(@"C:\缓存",Reparse.Build(Reparse.Mount,@"D:\数据\目录"));
             Check(junction.Target==@"D:\数据\目录" && junction.Tag==Reparse.Mount,"junction Unicode roundtrip");
             var symbolic=Reparse.Parse(@"C:\link",Reparse.Build(Reparse.Symlink,@"D:\target"));

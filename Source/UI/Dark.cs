@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using LinkShelf.Core;
 namespace LinkShelf.UI;
 public static class Dark
 {
@@ -40,12 +41,12 @@ public static class Dark
         layout.RowStyles.Add(new RowStyle(SizeType.Percent,100)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,44));
         var content = new TextBox { Text = text, Multiline = true, ReadOnly = true, Dock = DockStyle.Fill, ScrollBars = ScrollBars.Vertical, BorderStyle = BorderStyle.None };
         var buttons = new DarkFlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.RightToLeft };
-        var cancel = Button(confirm ? "取消" : "知道了", (_,_) => { f.DialogResult = DialogResult.Cancel; }, 90); buttons.Controls.Add(cancel); f.CancelButton = cancel;
-        if (confirm) { var ok = Button("确认", (_,_) => { f.DialogResult = DialogResult.OK; }, 90); buttons.Controls.Add(ok); f.AcceptButton = ok; }
+        var cancel = Button(confirm ? L.T("取消") : L.T("知道了"), (_,_) => { f.DialogResult = DialogResult.Cancel; }, 90); buttons.Controls.Add(cancel); f.CancelButton = cancel;
+        if (confirm) { var ok = Button(L.T("确认"), (_,_) => { f.DialogResult = DialogResult.OK; }, 90); buttons.Controls.Add(ok); f.AcceptButton = ok; }
         layout.Controls.Add(content,0,0); layout.Controls.Add(buttons,0,1); f.Controls.Add(layout); Apply(f);
         return owner == null ? f.ShowDialog() : f.ShowDialog(owner);
     }
-    public static void ShowError(IWin32Window? owner, string text) => Message(owner, "操作未完成", text);
+    public static void ShowError(IWin32Window? owner, string text) => Message(owner, L.T("操作未完成"), text);
 }
 public sealed class DarkForm : Form
 {

@@ -33,9 +33,9 @@ public sealed class PersistentStore
         if (!File.Exists(sizesPath)) return;
         try
         {
-            if (new FileInfo(sizesPath).Length > MaxJsonBytes) throw new InvalidDataException("大小缓存超出安全上限");
+            if (new FileInfo(sizesPath).Length > MaxJsonBytes) throw new InvalidDataException(L.T("大小缓存超出安全上限"));
             var doc = JsonSerializer.Deserialize<SizeDocument>(File.ReadAllText(sizesPath));
-            if (doc is null || doc.Schema != Schema || doc.Entries is null) throw new InvalidDataException("大小缓存版本或格式不正确");
+            if (doc is null || doc.Schema != Schema || doc.Entries is null) throw new InvalidDataException(L.T("大小缓存版本或格式不正确"));
             CreatedUtc = doc.CreatedUtc;
             UpdatedUtc = doc.UpdatedUtc;
             foreach (var entry in doc.Entries)
@@ -50,9 +50,9 @@ public sealed class PersistentStore
         if (!File.Exists(linksPath)) return;
         try
         {
-            if (new FileInfo(linksPath).Length > MaxJsonBytes) throw new InvalidDataException("链接快照超出安全上限");
+            if (new FileInfo(linksPath).Length > MaxJsonBytes) throw new InvalidDataException(L.T("链接快照超出安全上限"));
             var doc = JsonSerializer.Deserialize<LinkDocument>(File.ReadAllText(linksPath));
-            if (doc is null || doc.Schema != Schema || doc.Instances is null) throw new InvalidDataException("链接快照版本或格式不正确");
+            if (doc is null || doc.Schema != Schema || doc.Instances is null) throw new InvalidDataException(L.T("链接快照版本或格式不正确"));
             foreach (var pair in doc.Instances)
                 if (!string.IsNullOrWhiteSpace(pair.Key) && pair.Value?.Paths != null)
                     snapshots[pair.Key] = new LinkSnapshot

@@ -64,7 +64,7 @@ jobs:
           Copy-Item -LiteralPath 'dist-mover-tests/LinkShelfMover.dll' -Destination $tests
           Copy-Item -LiteralPath 'Tests/Run_Tests.cmd' -Destination $tests
           Copy-Item -LiteralPath 'Tools/LinkShelfMover.Tests/Run_Mover_Tests.cmd' -Destination $tests
-          Copy-Item -LiteralPath 'README.txt','README.md','README.en.md','LICENSE','CHANGELOG.md','RELEASE_NOTES.md','THIRD_PARTY_NOTICES.md' -Destination $stage
+          Copy-Item -LiteralPath 'README.txt','README.md','README.en.md','languages.json','LICENSE','CHANGELOG.md','RELEASE_NOTES.md','THIRD_PARTY_NOTICES.md' -Destination $stage
           Copy-Item -LiteralPath 'Tools/LinkShelfMover/README.md' -Destination (Join-Path $stage 'README_Mover.md')
           $sourceRoot = (Resolve-Path 'Source').Path
           Get-ChildItem -LiteralPath 'Source' -Recurse -File |

@@ -1,8 +1,9 @@
-﻿LinkShelf 1.0.4 Stable
+﻿LinkShelf 1.0.5 Stable
 
-v1.0.4：目标不存在的失效链接在下方明细顶部列出，目标大小显示“—”，并从 C 盘转出总量和部分/异常计数中排除；真正的权限错误和不完整扫描仍会提示。Mover 的一级右键菜单、“发送到”入口、/J、/D、迁移与回退流程保持不变。
+v1.0.5：管理器和 Mover 全面提供中英文界面，按 Windows 界面语言自动选择；翻译集中在 languages.json 中。原有缓存、统计逻辑、/J、/D 迁移和回退流程不变。
 
 运行：完整解压发布包，双击 LinkShelf.exe（管理）或 LinkShelfMover.exe（迁移）。
+语言：随包的 languages.json 包含中英文全部词条；中文 Windows 界面使用中文，其他语言界面使用英文。切换 Windows 语言后请重启本程序。语言文件丢失或损坏时可使用 EXE 内嵌备份。原有 LinkShelf.sizes.json、LinkShelf.links.json、LinkShelf.settings.json 无需转换。
 EXE 图标与窗口左上角统一使用 Windows Forms 标准图标；鼠标悬停及文件属性可查看文件版本、产品版本、说明、作者标识和版权信息。
 要求：Windows 10/11 x64、.NET 8 Desktop Runtime x64；使用 LinkShelf.exe 时 Everything 客户端需已运行，Mover 不需要 Everything。
 如缺少运行时： https://dotnet.microsoft.com/zh-cn/download/dotnet/8.0
@@ -45,6 +46,7 @@ EXE 图标与窗口左上角统一使用 Windows Forms 标准图标；鼠标悬�
 Mover 快速使用：
 1. 运行 LinkShelfMover.exe，可选“添加一级右键菜单”（推荐）或“加入「发送到」菜单”；两者均只对当前用户生效，可分别移除。
 2. 右键单个普通文件夹 → 使用 LinkShelf Mover 迁移；Windows 11 新式右键菜单可能需先点“显示更多选项”。原“发送到 → LinkShelf - 移动并建立目录连接点”仍保留。
+   英文系统新安装的入口使用英文文字，原中文「发送到」快捷方式仍能识别、移除；既有一级菜单需移除后重装以更新名称。
 3. 选择目标父目录。例如 C:\A 搬往 D:\B，则自动填写 D:\B\A；可手动编辑最终目标路径。
 4. 选择“目录连接点 /J”（默认）或“目录符号链接 /D”，检查源目录、目标目录和文件占用后，点击“检查并开始迁移”。
 5. 复制、校验通过后才切换原路径为链接；如遇错误 5 可选择 UAC 提权重开，源/目标/类型会保留，但需要再次手动确认迁移。

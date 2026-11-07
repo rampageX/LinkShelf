@@ -9,5 +9,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../Core/*.cs" Link="Core/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="../../languages.json" LogicalName="LinkShelf.languages.json" />
   </ItemGroup>
 </Project>

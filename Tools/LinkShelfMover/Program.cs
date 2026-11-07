@@ -23,12 +23,12 @@ internal static class Program
         }
         if (!acquired)
         {
-            Dark.ShowError(null, "已有一个 LinkShelf Mover 正在运行。为了避免两个迁移任务冲突，请先完成前一个任务。");
+            Dark.ShowError(null, L.T("已有一个 LinkShelf Mover 正在运行。为了避免两个迁移任务冲突，请先完成前一个任务。"));
             return;
         }
         if (args.Length > 1 && !elevatedRetry)
         {
-            Dark.ShowError(null, "每次只能迁移一个目录。请在资源管理器中仅选择一个文件夹。");
+            Dark.ShowError(null, L.T("每次只能迁移一个目录。请在资源管理器中仅选择一个文件夹。"));
             return;
         }
         Application.Run(new MoverForm(elevatedRetry ? args[1] : args.Length == 1 ? args[0] : "",

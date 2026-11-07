@@ -33,7 +33,7 @@ try
     var completionLog = new RecordingProgress();
     MoveResult done = await MigrationEngine.MoveAsync(src, dst, completionLog, CancellationToken.None);
     Assert(done.BackupLeft == null && done.FileCount == 2, "move completed and old copy removed");
-    Assert(completionLog.Messages.LastOrDefault() == "原目录备份已清理，迁移全部完成，目录链接正常。",
+    Assert(completionLog.Messages.LastOrDefault() == L.T("原目录备份已清理，迁移全部完成，目录链接正常。"),
         "final progress confirms source backup was removed");
     Assert(Reparse.Read(src).Tag == Reparse.Mount && Reparse.Read(src).Target == dst, "original path is native /J junction");
     Assert(File.ReadAllText(Path.Combine(src, "a.txt")) == "目录连接点测试 🦆" &&
