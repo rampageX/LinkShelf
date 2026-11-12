@@ -307,18 +307,22 @@ public sealed class MainForm : Form
     async Task RefreshLinks()
     {
         if(busy)return; DetectInstances();
-        if(instances.SelectedItem is not EverythingInstance instance) { Dark.ShowError(this,L.T("未发现 Everything 客户端。请先启动你已有的 Everything 副本。"));return; }
+        if(instances.SelectedItem is not EverythingInstance instance) { status.Text=L.T("IPC 连接失败：未发现 Everything 客户端。"); Dark.ShowError(this,L.T("未发现 Everything 客户端。请先启动你已有的 Everything 副本。"));return; }
         work=new CancellationTokenSource(); SetBusy(true); var token=work.Token;
+        bool ipcAccepted=false;
         try
         {
-            status.Text=L.T("正在查询 Everything 已有索引…");
+            status.Text=L.T("IPC 连接中…");
             reply=new(TaskCreationOptions.RunContinuationsAsynchronously); expectedSender=instance.Handle; queryId++;
             var current=reply;
             // Run SendMessageTimeout off the UI thread so the receiving window keeps pumping messages.
             IntPtr replyHwnd=Handle; uint requestId=queryId;
             var send=Task.Run(()=>EverythingIpc.Send(instance,replyHwnd,requestId),token);
             await send;
+            ipcAccepted=true;
+            status.Text=L.T("IPC 已连接，等待 Everything 返回结果…");
             byte[] packet=await current.Task.WaitAsync(TimeSpan.FromSeconds(30),token);
+            status.Text=L.T("Everything 已返回结果，正在解析…");
             var paths=await Task.Run(()=>EverythingIpc.Parse(packet),token);
             status.Text=L.T("索引返回 {0:N0} 个候选目录，正在读取实际链接类型…",paths.Count);
             int ignored=0;
@@ -357,8 +361,8 @@ public sealed class MainForm : Form
             status.Text=L.T("发现 {0:N0} 个目录链接；排除其他重解析点 / 网络索引目录 {1:N0} 个。索引覆盖范围由所选 Everything 实例决定。",rows.Count,ignored)+snapshotWarning;
         }
         catch(OperationCanceledException){status.Text=L.T("已停止，保留原列表。");}
-        catch(TimeoutException){Dark.ShowError(this,L.T("Everything 查询超时。确认所选实例已完成索引加载后重试。"));status.Text=L.T("查询超时");}
-        catch(Exception e){Dark.ShowError(this,e.Message);status.Text=L.T("查询未完成");}
+        catch(TimeoutException){status.Text=L.T("Everything 返回结果超时，请重试。");Dark.ShowError(this,status.Text);}
+        catch(Exception e){status.Text=ipcAccepted ? L.T("查询未完成") : L.T("IPC 连接失败，请检查 Everything 状态及权限。");Dark.ShowError(this,e.Message);}
         finally { reply=null;SetBusy(false);work.Dispose();work=null; }
     }
     protected override void WndProc(ref Message m)
