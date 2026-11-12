@@ -54,6 +54,7 @@ public sealed class Settings
     public string Instance { get; set; } = "";
     public string SortColumn { get; set; } = "Path";
     public bool SortAscending { get; set; } = true;
+    public int QueryTimeoutSeconds { get; set; } = 30;
     public int[] ColumnWidths { get; set; } = [];
     public int ColumnLayoutVersion { get; set; }
     public static readonly string FilePath = System.IO.Path.Combine(AppContext.BaseDirectory, "LinkShelf.settings.json");
