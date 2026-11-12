@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.6 — Everything 通讯阶段提示与自定义查询超时
+
+- 管理器左下角状态栏分阶段提示 IPC 连接、Everything 接受查询、等待返回、解析结果；结果超时单独显示“Everything 返回结果超时，请重试”。
+- 状态栏最右新增「设置」文字链接，打开小型暗色设置框，可将 Everything 查询结果等待时间设为 5–600 秒（默认 30 秒）。确认后立即写入现有 `LinkShelf.settings.json`，下次查询生效。
+- IPC 发送仍为 5 秒；Everything 索引查询、目录链接筛选、大小缓存及 Mover 迁移/回退逻辑不变。
+- 全部新增词条集中在 `languages.json`，保留中英文自动切换；两款 EXE 文件版本统一为 1.0.6。
+
+
 ## v1.0.5 — 中英文界面自动切换
 
 - `LinkShelf.exe` 与 `LinkShelfMover.exe` 接入同一份 `languages.json`：`zh-*` Windows 界面语言使用中文，其余界面语言回退英文；无需用户手动选择。程序嵌入语言文件作为缺失/损坏时的安全后备。
