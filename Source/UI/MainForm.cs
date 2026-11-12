@@ -21,6 +21,8 @@ public sealed class MainForm : Form
     readonly DarkEllipsisLabel summary = new() { Text = L.T("连接正在运行的 Everything，读取已有索引"),
         Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft };
     readonly DarkEllipsisLabel status = new() { Text = L.T("就绪"), Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft };
+    readonly LinkLabel settingsLink = new() { Text = L.T("设置"), AutoSize = true, Anchor = AnchorStyles.Right,
+        Margin = new Padding(10,0,3,0), LinkBehavior = LinkBehavior.HoverUnderline };
     readonly TextBox detail = new() { Multiline = true, ReadOnly = true, Dock = DockStyle.Fill, ScrollBars = ScrollBars.Vertical };
     readonly List<LinkRow> rows = [];
     readonly PersistentStore persistent = new(AppContext.BaseDirectory);
@@ -116,7 +118,12 @@ public sealed class MainForm : Form
         filters.SizeChanged += (_,_) => ArrangeCommands();
         toolbar.SizeChanged += (_,_) => ArrangeCommands();
         ConfigureGrid(); root.Controls.Add(new DarkGridHost(grid),0,3);
-        root.Controls.Add(detail,0,4); root.Controls.Add(status,0,5); Controls.Add(root);
+        root.Controls.Add(detail,0,4);
+        var footer = new DarkTableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, Margin = Padding.Empty };
+        footer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));
+        footer.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        footer.Controls.Add(status,0,0); footer.Controls.Add(settingsLink,1,0);
+        root.Controls.Add(footer,0,5); Controls.Add(root);
         hideSystem.Checked = settings.HideSystem;
         sort = new[]{"Name","Path","Kind","Target","Bytes","Status"}.Contains(settings.SortColumn) ? settings.SortColumn : "Path";
         ascending = settings.SortAscending;
@@ -130,6 +137,11 @@ public sealed class MainForm : Form
         cacheInfo.VisitedLinkColor = Dark.Accent;
         cacheInfo.DisabledLinkColor = Dark.Muted;
         status.ForeColor = Dark.Muted;
+        settingsLink.LinkColor = Dark.Accent;
+        settingsLink.ActiveLinkColor = Dark.Text;
+        settingsLink.VisitedLinkColor = Dark.Accent;
+        settingsLink.DisabledLinkColor = Dark.Muted;
+        settingsLink.LinkClicked += (_,_) => ConfigureQueryTimeout();
         UpdateCacheInfo();
         cacheInfo.LinkClicked += async (_,_) =>
             await Calculate(rows.Where(r => !r.IsSystem && Paths.IsLocalDrive(r.Target)).ToList(),true);
@@ -163,19 +175,76 @@ public sealed class MainForm : Form
         FormClosing += (_,e) =>
         {
             if (busy) { work?.Cancel(); e.Cancel = true; status.Text = L.T("正在停止，请等待当前文件系统调用返回后再关闭。"); return; }
-            try
-            {
-                var b = WindowState == FormWindowState.Normal ? Bounds : RestoreBounds;
-                settings.X = b.X; settings.Y = b.Y; settings.Width = b.Width; settings.Height = b.Height;
-                settings.Maximized = WindowState == FormWindowState.Maximized;
-                settings.HideSystem = hideSystem.Checked; settings.Instance = (instances.SelectedItem as EverythingInstance)?.ClassName ?? "";
-                settings.SortColumn = sort; settings.SortAscending = ascending;
-                settings.ColumnWidths = grid.Columns.Cast<DataGridViewColumn>().Select(c=>c.Width).ToArray();
-                settings.ColumnLayoutVersion = 1; settings.Save();
-            }
+            try { SaveCurrentSettings(); }
             catch (Exception ex) { Dark.ShowError(this,L.T("窗口设置未能保存：") + ex.Message); }
             filterTimer.Dispose();
         };
+    }
+    void SaveCurrentSettings()
+    {
+        var b = WindowState == FormWindowState.Normal ? Bounds : RestoreBounds;
+        settings.X = b.X; settings.Y = b.Y; settings.Width = b.Width; settings.Height = b.Height;
+        settings.Maximized = WindowState == FormWindowState.Maximized;
+        settings.HideSystem = hideSystem.Checked;
+        settings.Instance = (instances.SelectedItem as EverythingInstance)?.ClassName ?? "";
+        settings.SortColumn = sort; settings.SortAscending = ascending;
+        settings.ColumnWidths = grid.Columns.Cast<DataGridViewColumn>().Select(c=>c.Width).ToArray();
+        settings.ColumnLayoutVersion = 1;
+        settings.Save();
+    }
+    void ConfigureQueryTimeout()
+    {
+        if (busy) return;
+        using var dialog = new DarkForm
+        {
+            Text = L.T("设置"), ClientSize = new Size(365,155), FormBorderStyle = FormBorderStyle.FixedDialog,
+            MinimizeBox = false, MaximizeBox = false, ShowInTaskbar = false
+        };
+        var layout = new DarkTableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(16,12,16,10), RowCount = 3, ColumnCount = 1 };
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute,42));
+        layout.RowStyles.Add(new RowStyle(SizeType.Percent,100));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute,40));
+        var editor = new DarkFlowLayoutPanel { Dock = DockStyle.Fill, WrapContents = false };
+        var label = new Label { Text = L.T("查询超时（秒）："), AutoSize = true, Margin = new Padding(0,9,8,0) };
+        var input = new TextBox
+        {
+            Width = 72, MaxLength = 3, TextAlign = HorizontalAlignment.Center,
+            Text = Math.Clamp(settings.QueryTimeoutSeconds,5,600).ToString(),
+            Margin = new Padding(0,5,0,0)
+        };
+        editor.Controls.Add(label); editor.Controls.Add(input);
+        var note = new Label
+        {
+            Text = L.T("仅等待 Everything 返回结果；IPC 保持 5 秒。"), Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleLeft, AutoEllipsis = true
+        };
+        var buttons = new DarkFlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.RightToLeft, WrapContents = false };
+        var cancel = Dark.Button(L.T("取消"), (_,_) => { dialog.DialogResult = DialogResult.Cancel; }, 84);
+        var confirm = Dark.Button(L.T("确认"), (_,_) =>
+        {
+            if (!int.TryParse(input.Text, out int seconds) || seconds < 5 || seconds > 600)
+            {
+                Dark.ShowError(dialog,L.T("请输入 5 至 600 之间的整数秒数。"));
+                input.Focus(); input.SelectAll(); return;
+            }
+            int previous = settings.QueryTimeoutSeconds;
+            settings.QueryTimeoutSeconds = seconds;
+            try { SaveCurrentSettings(); }
+            catch (Exception ex)
+            {
+                settings.QueryTimeoutSeconds = previous;
+                Dark.ShowError(dialog,L.T("窗口设置未能保存：") + ex.Message);
+                return;
+            }
+            status.Text = L.T("查询超时已设置为 {0} 秒；下次查询生效。", seconds);
+            dialog.DialogResult = DialogResult.OK;
+        }, 84);
+        buttons.Controls.Add(cancel); buttons.Controls.Add(confirm);
+        layout.Controls.Add(editor,0,0); layout.Controls.Add(note,0,1); layout.Controls.Add(buttons,0,2);
+        dialog.Controls.Add(layout); dialog.AcceptButton = confirm; dialog.CancelButton = cancel;
+        Dark.Apply(dialog); note.ForeColor = Dark.Muted;
+        dialog.Shown += (_,_) => { input.Focus(); input.SelectAll(); };
+        dialog.ShowDialog(this);
     }
     void AddButton(FlowLayoutPanel panel, string name, EventHandler action, int width = 110)
     { var b = Dark.Button(name,action,width); panel.Controls.Add(b); actions.Add(b); }
@@ -301,24 +370,28 @@ public sealed class MainForm : Form
         if(found.Count>0)instances.SelectedIndex=Math.Max(0,index);
     }
     void SetBusy(bool value)
-    { busy=value; foreach(var b in actions)b.Enabled=!value; instances.Enabled=!value;
+    { busy=value; foreach(var b in actions)b.Enabled=!value; instances.Enabled=!value; settingsLink.Enabled=!value;
       if(cacheInfo.Links.Count>0)cacheInfo.Links[0].Enabled=!value;
       stop.Enabled=value; }
     async Task RefreshLinks()
     {
         if(busy)return; DetectInstances();
-        if(instances.SelectedItem is not EverythingInstance instance) { Dark.ShowError(this,L.T("未发现 Everything 客户端。请先启动你已有的 Everything 副本。"));return; }
+        if(instances.SelectedItem is not EverythingInstance instance) { status.Text=L.T("IPC 连接失败：未发现 Everything 客户端。"); Dark.ShowError(this,L.T("未发现 Everything 客户端。请先启动你已有的 Everything 副本。"));return; }
         work=new CancellationTokenSource(); SetBusy(true); var token=work.Token;
+        bool ipcAccepted=false;
         try
         {
-            status.Text=L.T("正在查询 Everything 已有索引…");
+            status.Text=L.T("IPC 连接中…");
             reply=new(TaskCreationOptions.RunContinuationsAsynchronously); expectedSender=instance.Handle; queryId++;
             var current=reply;
             // Run SendMessageTimeout off the UI thread so the receiving window keeps pumping messages.
             IntPtr replyHwnd=Handle; uint requestId=queryId;
             var send=Task.Run(()=>EverythingIpc.Send(instance,replyHwnd,requestId),token);
             await send;
-            byte[] packet=await current.Task.WaitAsync(TimeSpan.FromSeconds(30),token);
+            ipcAccepted=true;
+            status.Text=L.T("IPC 已连接，等待 Everything 返回结果…");
+            byte[] packet=await current.Task.WaitAsync(TimeSpan.FromSeconds(Math.Clamp(settings.QueryTimeoutSeconds,5,600)),token);
+            status.Text=L.T("Everything 已返回结果，正在解析…");
             var paths=await Task.Run(()=>EverythingIpc.Parse(packet),token);
             status.Text=L.T("索引返回 {0:N0} 个候选目录，正在读取实际链接类型…",paths.Count);
             int ignored=0;
@@ -357,8 +430,8 @@ public sealed class MainForm : Form
             status.Text=L.T("发现 {0:N0} 个目录链接；排除其他重解析点 / 网络索引目录 {1:N0} 个。索引覆盖范围由所选 Everything 实例决定。",rows.Count,ignored)+snapshotWarning;
         }
         catch(OperationCanceledException){status.Text=L.T("已停止，保留原列表。");}
-        catch(TimeoutException){Dark.ShowError(this,L.T("Everything 查询超时。确认所选实例已完成索引加载后重试。"));status.Text=L.T("查询超时");}
-        catch(Exception e){Dark.ShowError(this,e.Message);status.Text=L.T("查询未完成");}
+        catch(TimeoutException){status.Text=L.T("Everything 返回结果超时，请重试。");Dark.ShowError(this,status.Text);}
+        catch(Exception e){status.Text=ipcAccepted ? L.T("查询未完成") : L.T("IPC 连接失败，请检查 Everything 状态及权限。");Dark.ShowError(this,e.Message);}
         finally { reply=null;SetBusy(false);work.Dispose();work=null; }
     }
     protected override void WndProc(ref Message m)

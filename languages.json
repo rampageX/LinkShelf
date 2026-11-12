@@ -283,6 +283,17 @@
 {"zh":"大小缓存版本或格式不正确","en":"Size cache version or format is invalid"},
 {"zh":"链接快照超出安全上限","en":"Link snapshot exceeds the safety limit"},
 {"zh":"链接快照版本或格式不正确","en":"Link snapshot version or format is invalid"},
-    {"zh":"使用 LinkShelf Mover 迁移","en":"Move folder with LinkShelf Mover"}
+    {"zh":"使用 LinkShelf Mover 迁移","en":"Move folder with LinkShelf Mover"},
+    {"zh":"IPC 连接中…","en":"Connecting to Everything IPC…"},
+    {"zh":"IPC 已连接，等待 Everything 返回结果…","en":"IPC connected; waiting for Everything results…"},
+    {"zh":"Everything 已返回结果，正在解析…","en":"Everything results received; parsing…"},
+    {"zh":"Everything 返回结果超时，请重试。","en":"Timed out waiting for Everything results. Please retry."},
+    {"zh":"IPC 连接失败，请检查 Everything 状态及权限。","en":"IPC connection failed. Check Everything and process permissions."},
+    {"zh":"IPC 连接失败：未发现 Everything 客户端。","en":"IPC connection failed: Everything client not found."},
+    {"zh":"设置","en":"Settings"},
+    {"zh":"查询超时（秒）：","en":"Query timeout (seconds):"},
+    {"zh":"仅等待 Everything 返回结果；IPC 保持 5 秒。","en":"Only Everything response wait is changed; IPC stays at 5s."},
+    {"zh":"请输入 5 至 600 之间的整数秒数。","en":"Enter an integer from 5 to 600 seconds."},
+    {"zh":"查询超时已设置为 {0} 秒；下次查询生效。","en":"Query timeout set to {0} seconds; takes effect on the next query."}
   ]
 }
