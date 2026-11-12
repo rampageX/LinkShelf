@@ -1,3 +1,17 @@
+# LinkShelf v1.0.6 — Everything 通讯状态与查询超时设置
+
+- **连接状态更清楚**：左下角依次提示「IPC 连接中」「IPC 已连接，等待 Everything 返回结果」「Everything 已返回结果，正在解析」，完成后照常显示链接统计。
+- **超时信息分开**：Everything 已接收查询但未按时返回结果时，明确显示「Everything 返回结果超时，请重试」，区别于 IPC 发送失败。
+- **可调查询超时**：底部信息栏最右端「设置」文字链接可打开小窗口，修改等待结果的秒数（默认 **30 秒**，可设 **5–600 秒**），保存于 `LinkShelf.settings.json`，下次查询生效。
+- **IPC 参数不变**：发送查询请求超时仍为 **5 秒**；Everything 索引查询、链接管理、大小缓存及 Mover 搬迁与回退机制均保持不变。
+- 新增文字统一存入单份 `languages.json`，支持中英文界面。主程序与 Mover 版本统一为 **1.0.6**。
+
+用户已在 Windows 上验证状态阶段显示和可调查询超时。GitHub Actions 在 Windows x64 上构建两款 EXE 并执行两套原生测试；测试通过后才发布。
+
+完整解压 `LinkShelf_v1.0.6_Windows_x64.zip`。旧版的 `LinkShelf.settings.json`、`LinkShelf.sizes.json` 和 `LinkShelf.links.json` 继续兼容，无需删除或转换。
+
+---
+
 # LinkShelf v1.0.5 — 中英文界面
 
 LinkShelf 管理器与 Mover 现在都能根据 Windows 当前界面语言自动选择中文或英文（`zh-*` 为中文，其他语言为英文）。
