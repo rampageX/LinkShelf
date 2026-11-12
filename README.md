@@ -4,7 +4,7 @@
 
 LinkShelf 是一套轻量、暗色、便携的 Windows 文件夹链接工具：**LinkShelf.exe** 负责集中查看和管理链接，**LinkShelfMover.exe** 负责将普通文件夹安全迁往其他本地磁盘，并在原位置建立链接。主程序直接使用**已经运行的 Everything 实例**查询索引，不重扫所有硬盘、不创建第二套索引；Mover 独立运行，无需 Everything。
 
-**当前稳定版：v1.0.5**。管理器和 Mover 均支持**中英文界面**：根据 Windows 界面语言自动选择中文（`zh-*`）或英文（其他语言）；所有翻译放在同一个便携 `languages.json` 文件中。永久大小缓存、新链接置顶、失效目标单独记录和两种文件夹右键入口继续保留。
+**当前稳定版：v1.0.6**。管理器和 Mover 均支持**中英文界面**：根据 Windows 界面语言自动选择中文（`zh-*`）或英文（其他语言）；所有翻译放在同一个便携 `languages.json` 文件中。永久大小缓存、新链接置顶、失效目标单独记录和两种文件夹右键入口继续保留。
 
 ## 功能
 
@@ -17,6 +17,8 @@ LinkShelf 是一套轻量、暗色、便携的 Windows 文件夹链接工具：*
 - 界面、右键菜单、弹窗、提示及 Mover 迁移日志中英文双语；无需手工切换或联网下载语言包。
 - 目标文件夹大小跨启动缓存，统计行末尾显示创建时间、可点击的“更新”及最近更新时间；新增链接在其分组内继续遵守当前列排序。
 - 已扫描到的失效目标在下方明细框顶部逐条列出链接路径与目标路径；目标大小显示“—”，不会算作部分扫描，也不会遮蔽其他正常目标的转出数据。
+- Everything 查询左下角按 IPC 连接、等待返回、结果解析分阶段显示；结果等待超时独立提示。
+- 左下角最右端「设置」可调整 Everything 查询结果等待超时（默认 30 秒、5–600 秒），保存于 `LinkShelf.settings.json`；IPC 发送超时仍为 5 秒。
 - 单行响应式工具栏、自绘暗色悬停提示和深色下拉列表。
 
 ### LinkShelf Mover：右键一键搬家
@@ -30,7 +32,7 @@ LinkShelf 是一套轻量、暗色、便携的 Windows 文件夹链接工具：*
 
 ## 下载与运行
 
-从 [v1.0.5 Release](https://github.com/rampageX/LinkShelf/releases/tag/v1.0.5) 下载 `LinkShelf_v1.0.5_Windows_x64.zip` 并**完整解压**。运行 `LinkShelf.exe` 管理链接，或运行同目录的 `LinkShelfMover.exe` 迁移普通文件夹。
+从 [v1.0.6 Release](https://github.com/rampageX/LinkShelf/releases/tag/v1.0.6) 下载 `LinkShelf_v1.0.6_Windows_x64.zip` 并**完整解压**。运行 `LinkShelf.exe` 管理链接，或运行同目录的 `LinkShelfMover.exe` 迁移普通文件夹。
 
 要求：
 
@@ -71,7 +73,7 @@ dotnet publish Tools/LinkShelfMover/LinkShelfMover.csproj -c Release -r win-x64 
 
 ## 版本
 
-当前稳定版：**v1.0.5**。详细变更见 [CHANGELOG.md](CHANGELOG.md)。
+当前稳定版：**v1.0.6**。详细变更见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 许可证
 
