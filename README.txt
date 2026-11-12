@@ -1,6 +1,6 @@
-﻿LinkShelf 1.0.5 Stable
+﻿LinkShelf 1.0.6 Stable
 
-v1.0.5：管理器和 Mover 全面提供中英文界面，按 Windows 界面语言自动选择；翻译集中在 languages.json 中。原有缓存、统计逻辑、/J、/D 迁移和回退流程不变。
+v1.0.6：左下角显示 Everything IPC 连接、等待返回、结果解析阶段，等待结果超时单独提示。信息行最右端「设置」可调整查询等待超时，默认 30 秒，支持 5–600 秒，保存至 LinkShelf.settings.json；IPC 发送超时仍为 5 秒。中英文界面、缓存、统计逻辑和 Mover 迁移回退流程不变。
 
 运行：完整解压发布包，双击 LinkShelf.exe（管理）或 LinkShelfMover.exe（迁移）。
 语言：随包的 languages.json 包含中英文全部词条；中文 Windows 界面使用中文，其他语言界面使用英文。切换 Windows 语言后请重启本程序。语言文件丢失或损坏时可使用 EXE 内嵌备份。原有 LinkShelf.sizes.json、LinkShelf.links.json、LinkShelf.settings.json 无需转换。
