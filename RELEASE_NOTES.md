@@ -1,3 +1,16 @@
+# LinkShelf v1.0.8 — 修复 Mover 窗口标题版本号
+
+- 修复此前遗漏：虽然 `LinkShelfMover.exe` 的文件版本已经更新至 1.0.7，但其窗口标题依然硬编码显示 **1.0.5**。
+- 管理器与 Mover 的标题统一改为直接读取**各自程序集版本**，以后发布新版只需更新项目版本号，窗口标题同步更新。
+- 新增 Windows 原生回归测试，核对 Mover 窗口标题的版本号与程序集版本一致。
+- 两款 EXE 的文件/产品/程序集版本统一为 **1.0.8**，窗口标题也都显示 **1.0.8**。
+- 保留 v1.0.7 已由用户在 WizTree 实测通过的右键菜单图标修复（`Icon` 为无 `,0` 后缀的纯 EXE 路径）。
+- Everything IPC、设置、大小缓存、目录链接及 Mover 的实际迁移和回退流程不变。
+
+下载并完整解压 `LinkShelf_v1.0.8_Windows_x64.zip`；旧版 `LinkShelf.settings.json`、`LinkShelf.sizes.json` 与 `LinkShelf.links.json` 可直接保留。
+
+---
+
 # LinkShelf v1.0.7 — Mover 右键菜单图标兼容修复
 
 - **修复右键菜单图标**：一级目录右键菜单的注册表 `Icon` 值改为 `LinkShelfMover.exe` 的纯完整路径，移除末尾的 `,0`。解决 WizTree 等第三方程序不能显示 LinkShelf Mover 图标的问题。
