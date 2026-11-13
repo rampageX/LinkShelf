@@ -1,3 +1,15 @@
+# LinkShelf v1.0.7 — Mover 右键菜单图标兼容修复
+
+- **修复右键菜单图标**：一级目录右键菜单的注册表 `Icon` 值改为 `LinkShelfMover.exe` 的纯完整路径，移除末尾的 `,0`。解决 WizTree 等第三方程序不能显示 LinkShelf Mover 图标的问题。
+- **已由用户实测**：卸载旧菜单并使用修正版重新安装，确认注册表已不带 `,0`，且 WizTree 右键菜单图标正常显示。
+- **兼容旧安装**：原来带 `,0` 的菜单仍能安全卸载；新安装无需提升权限，使用当前用户注册表项。
+- **安全范围不变**：菜单执行命令、目录迁移校验、NTFS 链接建立与回退、Everything IPC 以及缓存设置均没有改动。
+- **回归检查**：新增 Windows 原生测试，检查新注册的图标路径及旧格式菜单卸载兼容性；两款 EXE 版本统一为 1.0.7。
+
+下载并完整解压 `LinkShelf_v1.0.7_Windows_x64.zip`。旧版 `LinkShelf.settings.json`、`LinkShelf.sizes.json` 和 `LinkShelf.links.json` 可以保留。如果已经安装一级菜单，建议从 Mover 中先移除旧菜单再重新安装，以便写入新的图标路径。
+
+---
+
 # LinkShelf v1.0.6 — Everything 通讯状态与查询超时设置
 
 - **连接状态更清楚**：左下角依次提示「IPC 连接中」「IPC 已连接，等待 Everything 返回结果」「Everything 已返回结果，正在解析」，完成后照常显示链接统计。

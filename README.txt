@@ -1,4 +1,6 @@
-﻿LinkShelf 1.0.6 Stable
+﻿LinkShelf 1.0.7 Stable
+
+v1.0.7：Mover 一级右键菜单的 Icon 注册表值改为纯 LinkShelfMover.exe 完整路径，不再带 ,0，解决 WizTree 等第三方右键菜单不显示图标的问题；旧菜单可正常卸载，右键执行命令及迁移流程保持不变。
 
 v1.0.6：左下角显示 Everything IPC 连接、等待返回、结果解析阶段，等待结果超时单独提示。信息行最右端「设置」可调整查询等待超时，默认 30 秒，支持 5–600 秒，保存至 LinkShelf.settings.json；IPC 发送超时仍为 5 秒。中英文界面、缓存、统计逻辑和 Mover 迁移回退流程不变。
 

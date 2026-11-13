@@ -4,7 +4,7 @@
 
 LinkShelf is a portable, dark-themed Windows folder-link toolkit with two executables: **LinkShelf.exe** manages existing links using an **already running Everything instance** over IPC (no full-disk rescan), while **LinkShelfMover.exe** migrates ordinary folders and creates links at their original locations without requiring Everything.
 
-**Current stable release: v1.0.6**. Both the manager and folder mover ship together with bilingual interfaces. Windows UI languages starting with `zh` select Chinese; all others select English automatically. Missing targets remain excluded from offload totals and incomplete/error counts.
+**Current stable release: v1.0.7**. Both the manager and folder mover ship together with bilingual interfaces. Windows UI languages starting with `zh` select Chinese; all others select English automatically. Missing targets remain excluded from offload totals and incomplete/error counts.
 
 ### Highlights
 
@@ -25,7 +25,7 @@ LinkShelf is a portable, dark-themed Windows folder-link toolkit with two execut
 
 Windows 10/11 x64 and [.NET 8 Desktop Runtime x64](https://dotnet.microsoft.com/download/dotnet/8.0). The manager additionally requires a running [Everything](https://www.voidtools.com/) client with an existing index; Mover does not.
 
-Download `LinkShelf_v1.0.6_Windows_x64.zip` from the [v1.0.6 Release](https://github.com/rampageX/LinkShelf/releases/tag/v1.0.6), extract the entire ZIP, and run either `LinkShelf.exe` or `LinkShelfMover.exe`.
+Download `LinkShelf_v1.0.7_Windows_x64.zip` from the [v1.0.7 Release](https://github.com/rampageX/LinkShelf/releases/tag/v1.0.7), extract the entire ZIP, and run either `LinkShelf.exe` or `LinkShelfMover.exe`.
 
 Portable state stays beside the executable: `LinkShelf.sizes.json` holds cached logical sizes and timestamps; `LinkShelf.links.json` holds link snapshots per Everything instance. No existing links are marked as new during first-run baseline creation. **Connect / Refresh** only refreshes the indexed link list; the **Update** text link on the second statistics line recalculates folder sizes. The heading separately flags pending scans and incomplete/error scans; cached sizes are not live measurements.
 

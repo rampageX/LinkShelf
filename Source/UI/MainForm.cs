@@ -42,7 +42,7 @@ public sealed class MainForm : Form
     readonly System.Windows.Forms.Timer filterTimer = new() { Interval = 180 };
     public MainForm()
     {
-        Text = $"LinkShelf · {L.T("目录链接管理")}  1.0.6";
+        Text = $"LinkShelf · {L.T("目录链接管理")}  1.0.7";
         MinimumSize = new Size(980,620); ClientSize = new Size(1220,760);
         AutoScaleMode = AutoScaleMode.Dpi;
         DoubleBuffered = true;
