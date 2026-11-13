@@ -27,10 +27,11 @@ public sealed class MoverForm : Form
     private CancellationTokenSource? running;
     private bool busy;
 
+    public static string WindowTitle => $"LinkShelf Mover · {L.T("移动目录并创建链接")} · {typeof(MoverForm).Assembly.GetName().Version?.ToString(3) ?? "?"}";
     public MoverForm(string source, string destination = "", uint initialLinkTag = Reparse.Mount)
     {
         SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint, true);
-        Text = $"LinkShelf Mover · {L.T("移动目录并创建链接")} · 1.0.5";
+        Text = WindowTitle;
         ClientSize = new Size(920, 530);
         MinimumSize = new Size(810, 505);
         StartPosition = FormStartPosition.CenterScreen;
