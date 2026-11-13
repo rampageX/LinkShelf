@@ -19,6 +19,10 @@ async Task MustFail(string name, string source, string target, bool targetPreexi
 
 try
 {
+    string assemblyVersion = typeof(MoverForm).Assembly.GetName().Version!.ToString(3);
+    Assert(MoverForm.WindowTitle.EndsWith(" · " + assemblyVersion, StringComparison.Ordinal),
+        "Mover window title follows assembly version");
+
     string home = Path.Combine(scratch, "case1");
     string src = Path.Combine(home, "源目录 A");
     string parent = Path.Combine(home, "Destination");

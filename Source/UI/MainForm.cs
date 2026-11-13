@@ -40,9 +40,10 @@ public sealed class MainForm : Form
     int dividerRowIndex = -1, dividerHeight;
     string sort = "Path"; bool ascending = true;
     readonly System.Windows.Forms.Timer filterTimer = new() { Interval = 180 };
+    public static string WindowTitle => $"LinkShelf · {L.T("目录链接管理")}  {typeof(MainForm).Assembly.GetName().Version?.ToString(3) ?? "?"}";
     public MainForm()
     {
-        Text = $"LinkShelf · {L.T("目录链接管理")}  1.0.7";
+        Text = WindowTitle;
         MinimumSize = new Size(980,620); ClientSize = new Size(1220,760);
         AutoScaleMode = AutoScaleMode.Dpi;
         DoubleBuffered = true;
