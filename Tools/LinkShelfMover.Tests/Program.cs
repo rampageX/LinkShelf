@@ -115,10 +115,18 @@ try
         ContextMenuInstaller.InstallAt(testVerbKey, fakeExe);
         using (RegistryKey? key = Registry.CurrentUser.OpenSubKey(testVerbKey))
         using (RegistryKey? command = key?.OpenSubKey("command"))
+        {
             Assert(ContextMenuInstaller.IsInstalledAt(testVerbKey) &&
                    (string?)command?.GetValue(null) == "\"" + fakeExe + "\" \"%1\"",
                    "per-user folder menu registers a quoted single-folder command");
+            Assert((string?)key?.GetValue("Icon") == fakeExe,
+                   "folder menu icon uses plain EXE path without comma-zero index");
+        }
 
+        // Existing v1.0.6 entries use a quoted path followed by ,0.
+        // Keep uninstall compatible so users can remove/reinstall the old menu.
+        using (RegistryKey? legacy = Registry.CurrentUser.OpenSubKey(testVerbKey, writable: true))
+            legacy?.SetValue("Icon", "\"" + fakeExe + "\",0", RegistryValueKind.String);
         ContextMenuInstaller.UninstallAt(testVerbKey);
         Assert(Registry.CurrentUser.OpenSubKey(testVerbKey) == null,
             "folder menu uninstall removes only its own registry key");

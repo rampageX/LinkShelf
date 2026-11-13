@@ -53,7 +53,8 @@ public static class ContextMenuInstaller
                 throw new IOException(L.T("无法创建当前用户的右键菜单注册表项。"));
             created = true;
             key.SetValue("MUIVerb", L.T(Caption), RegistryValueKind.String);
-            key.SetValue("Icon", $"\"{executable}\",0", RegistryValueKind.String);
+            // Use a plain executable path: some third-party shell menus do not resolve ",0".
+            key.SetValue("Icon", executable, RegistryValueKind.String);
             key.SetValue("MultiSelectModel", "Single", RegistryValueKind.String);
             key.SetValue("Position", "Top", RegistryValueKind.String);
             using (RegistryKey command = key.CreateSubKey("command", writable: true) ??
